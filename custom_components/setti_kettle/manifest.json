@@ -1,0 +1,15 @@
+{
+  "domain": "setti_kettle",
+  "name": "SETTI Kettle",
+  "version": "0.3.0",
+  "documentation": "https://github.com/jotuera/setti-kettle-card",
+  "issue_tracker": "https://github.com/jotuera/setti-kettle-card/issues",
+  "codeowners": ["@jotuera"],
+  "config_flow": true,
+  "dependencies": ["http", "frontend"],
+  "after_dependencies": ["tuya", "recorder"],
+  "integration_type": "helper",
+  "iot_class": "calculated",
+  "requirements": [],
+  "loggers": ["custom_components.setti_kettle"]
+}

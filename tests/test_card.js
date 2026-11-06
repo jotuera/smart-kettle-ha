@@ -28,7 +28,7 @@ assert(defined["setti-kettle-card-editor"], "editor defined");
 
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
 function makeHass({ lang = "en", unit = "°C", cur = 21, tgt = 100, on = false, changed = 30, keep = false, status = "standby",
-                    keepTime = 0, tuyaLocal = false, counters = true, startTemp = null, helpers = false, history = null, mode = null } = {}) {
+                    keepTime = 0, tuyaLocal = false, counters = true, startTemp = null, helpers = false, history = null, mode = null, integration = false } = {}) {
   const states = {}, entities = {}, calls = [];
   const add = (id, state, attributes = {}, tk = null, device = "kettle1", lc = 60) => {
     states[id] = { entity_id: id, state: String(state), attributes, last_changed: ago(lc) };
@@ -62,6 +62,22 @@ function makeHass({ lang = "en", unit = "°C", cur = 21, tgt = 100, on = false, 
     add("input_boolean.kettle_ready_at", "on", {}, null, null);
   }
   if (mode) add("select.czajnik_work_mode", mode[0], { options: mode }, "kettle_work_mode");
+  if (integration) {
+    // entities of the SETTI Kettle integration on the kettle's device
+    const si = (id, state, attributes, tk) => { add(id, state, attributes, tk); entities[id].platform = "setti_kettle"; };
+    si("sensor.czajnik_boils_today", 4, {}, "boils_today");
+    si("sensor.czajnik_boils_since_cleaning", 7, { every: 20 }, "boils_since_cleaning");
+    si("sensor.czajnik_boils_since_descaling", 70, { every: 60 }, "boils_since_descaling");
+    si("button.czajnik_cleaned", "unknown", {}, "cleaned");
+    si("button.czajnik_descaled", "unknown", {}, "descaled");
+    si("sensor.czajnik_heating_rate", 36.5, { learned: true, power: 2200 }, "heating_rate");
+    si("sensor.czajnik_energy_today", 0.21, {}, "energy_today");
+    si("sensor.czajnik_last_boil", new Date(Date.now() - 600000).toISOString(), { minutes: 1.8 }, "last_boil");
+    si("select.czajnik_drink", "none", { options: ["none", "green_tea", "coffee", "black_tea", "yerba", "formula", "drink_water"] }, "drink");
+    si("time.czajnik_ready_at", "07:15:00", {}, "ready_at");
+    si("switch.czajnik_ready_at_enabled", "on", {}, "ready_at_enabled");
+    si("sensor.czajnik_ready_start", new Date(Date.now() + 3600000).toISOString(), {}, "ready_start");
+  }
   return {
     states, entities, calls, language: lang, locale: { language: lang }, config: { unit_system: { temperature: unit } },
     callService: (d, s, data) => { calls.push([d, s, data]); return Promise.resolve(); },
@@ -300,6 +316,37 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     assert(/today 0.13 kWh/.test(c._vm.stats), c._vm.stats);   // 2.2 kW · 3.5 min
     assert(/last /.test(c._vm.stats) && /1.5 min/.test(c._vm.stats), c._vm.stats);
     n++; console.log("ok  energy today and the last boil from the recorder");
+  }
+
+  ok("with the SETTI Kettle integration: its counters, rate, energy, drink select and ready at", () => {
+    clear();
+    const h = makeHass({ integration: true, counters: false });
+    const c = card({}, h);
+    const vm = c._vm;
+    assert.strictEqual(vm.ent.start, "switch.czajnik_start");   // the integration's entities are not taken as kettle roles
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(vm.counters.map((x) => [x.key, x.v, x.every, x.due]))), [["today", 4, 0, false], ["cleaning", 7, 20, false], ["descaling", 70, 60, true]]);
+    assert.strictEqual(vm.rate, 36.5);
+    assert(/today 0.21 kWh/.test(vm.stats) && /1.8 min/.test(vm.stats), vm.stats);
+    assert(/0?7:15/.test(vm.readyAt.time) && vm.readyAt.on);
+    h.calls.length = 0;
+    click(c, "drink", "green_tea");
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls)), [["select", "select_option", { entity_id: "select.czajnik_drink", option: "green_tea" }]]);
+    click(c, "ready_toggle");
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls.pop())), ["switch", "toggle", { entity_id: "switch.czajnik_ready_at_enabled" }]);
+    sandbox.window.confirm = () => true;
+    c._held = false;
+    c._down({ target: { closest: () => ({ dataset: { hold: "reset", id: "sensor.czajnik_boils_since_descaling", name: "Descaling" } }) } });
+  });
+  await wait(700);
+  {
+    const h = makeHass({ integration: true, counters: false });
+    // reset of an integration counter presses its button (checked through a fresh card)
+    const c = card({}, h);
+    sandbox.window.confirm = () => true;
+    c._down({ target: { closest: () => ({ dataset: { hold: "reset", id: "sensor.czajnik_boils_since_cleaning", name: "Cleaning" } }) } });
+    await wait(700);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls.pop())), ["button", "press", { entity_id: "button.czajnik_cleaned" }]);
+    n++; console.log("ok  hold an integration counter = press its button");
   }
 
   {

@@ -1,0 +1,125 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SETTI Kettle",
+        "description": "Nájdené kanvice: {count}. Karta, počítadlá, nápoje a „hotovo o“ sa pridajú k zariadeniu kanvice.",
+        "data": {
+          "device_id": "Kanvica",
+          "profile": "Profil kanvice",
+          "power": "Príkon"
+        },
+        "data_description": {
+          "power": "Menovitý príkon – pre množstvo vody a energiu. Prázdne = z profilu."
+        }
+      }
+    },
+    "abort": {
+      "no_kettle": "Nenašla sa žiadna Wi-Fi kanvica. Najprv pridajte kanvicu do Home Assistant (Tuya, tuya-local alebo LocalTuya).",
+      "already_configured": "Všetky kanvice sú už nastavené."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SETTI Kettle",
+        "description": "Energia, počítadlá, „hotovo o“ a oznámenia.",
+        "data": {
+          "profile": "Profil kanvice",
+          "power": "Príkon",
+          "price": "Cena za kWh",
+          "price_entity": "Entita ceny (namiesto pevnej ceny)",
+          "cleaning_every": "Umývať každých … varení",
+          "descaling_every": "Odvápniť každých … varení",
+          "boil_threshold": "Varenie sa počíta nad",
+          "ready_temperature": "Teplota „hotovo o“",
+          "notify": "Oznamovať",
+          "notify_boiled": "Oznámiť, keď je voda hotová",
+          "notify_steeped": "Oznámiť po lúhovaní"
+        },
+        "data_description": {
+          "boil_threshold": "Voda musí zostať nad touto teplotou 20 s.",
+          "notify": "Mobilné aplikácie alebo skripty (skript dostane premenné title a message).",
+          "power": "Menovitý príkon – pre množstvo vody a energiu. Prázdne = z profilu."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "boils_today": {
+        "name": "Varenia dnes"
+      },
+      "boils_since_cleaning": {
+        "name": "Varenia od umytia"
+      },
+      "boils_since_descaling": {
+        "name": "Varenia od odvápnenia"
+      },
+      "heating_rate": {
+        "name": "Rýchlosť ohrevu"
+      },
+      "water_amount": {
+        "name": "Voda pri poslednom varení"
+      },
+      "energy_today": {
+        "name": "Energia dnes"
+      },
+      "cost_today": {
+        "name": "Cena dnes"
+      },
+      "last_boil": {
+        "name": "Posledné varenie"
+      },
+      "ready_start": {
+        "name": "Štart „hotovo o“"
+      }
+    },
+    "binary_sensor": {
+      "cleaning_due": {
+        "name": "Čas na umytie"
+      },
+      "descaling_due": {
+        "name": "Čas na odvápnenie"
+      }
+    },
+    "button": {
+      "cleaned": {
+        "name": "Umyté"
+      },
+      "descaled": {
+        "name": "Odvápnené"
+      }
+    },
+    "select": {
+      "drink": {
+        "name": "Nápoj",
+        "state": {
+          "none": "Žiadny",
+          "green_tea": "Zelený čaj",
+          "white_tea": "Biely čaj",
+          "matcha": "Matcha",
+          "oolong": "Oolong",
+          "coffee": "Káva",
+          "yerba": "Yerba maté",
+          "black_tea": "Čierny čaj",
+          "herbal": "Bylinkový čaj",
+          "formula": "Dojčenské mlieko",
+          "honey": "Voda s medom",
+          "oatmeal": "Ovsená kaša / polievka",
+          "drink_water": "Teplá voda"
+        }
+      }
+    },
+    "switch": {
+      "ready_at_enabled": {
+        "name": "Hotovo o – zap."
+      }
+    },
+    "time": {
+      "ready_at": {
+        "name": "Hotovo o"
+      }
+    }
+  }
+}

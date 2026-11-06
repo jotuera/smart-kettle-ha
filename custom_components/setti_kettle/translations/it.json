@@ -1,0 +1,125 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SETTI Kettle",
+        "description": "Bollitori trovati: {count}. Scheda, contatori, bevande e «pronto alle» vengono aggiunti al dispositivo.",
+        "data": {
+          "device_id": "Bollitore",
+          "profile": "Profilo bollitore",
+          "power": "Potenza"
+        },
+        "data_description": {
+          "power": "Potenza nominale – per la quantità d'acqua e l'energia. Vuoto = dal profilo."
+        }
+      }
+    },
+    "abort": {
+      "no_kettle": "Nessun bollitore Wi-Fi trovato. Aggiungi prima il bollitore a Home Assistant (Tuya, tuya-local o LocalTuya).",
+      "already_configured": "Tutti i bollitori sono già configurati."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SETTI Kettle",
+        "description": "Energia, contatori, «pronto alle» e notifiche.",
+        "data": {
+          "profile": "Profilo bollitore",
+          "power": "Potenza",
+          "price": "Prezzo per kWh",
+          "price_entity": "Entità del prezzo (invece di un prezzo fisso)",
+          "cleaning_every": "Pulisci ogni … bolliture",
+          "descaling_every": "Decalcifica ogni … bolliture",
+          "boil_threshold": "Una bollitura conta sopra",
+          "ready_temperature": "Temperatura «pronto alle»",
+          "notify": "Notifica",
+          "notify_boiled": "Notifica quando l'acqua è pronta",
+          "notify_steeped": "Notifica a fine infusione"
+        },
+        "data_description": {
+          "boil_threshold": "L'acqua deve restarci sopra 20 s.",
+          "notify": "App mobili o script (uno script riceve le variabili title e message).",
+          "power": "Potenza nominale – per la quantità d'acqua e l'energia. Vuoto = dal profilo."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "boils_today": {
+        "name": "Bolliture oggi"
+      },
+      "boils_since_cleaning": {
+        "name": "Bolliture dalla pulizia"
+      },
+      "boils_since_descaling": {
+        "name": "Bolliture dalla decalcificazione"
+      },
+      "heating_rate": {
+        "name": "Velocità di riscaldamento"
+      },
+      "water_amount": {
+        "name": "Acqua dell'ultima bollitura"
+      },
+      "energy_today": {
+        "name": "Energia oggi"
+      },
+      "cost_today": {
+        "name": "Costo oggi"
+      },
+      "last_boil": {
+        "name": "Ultima bollitura"
+      },
+      "ready_start": {
+        "name": "Avvio «pronto alle»"
+      }
+    },
+    "binary_sensor": {
+      "cleaning_due": {
+        "name": "Pulizia da fare"
+      },
+      "descaling_due": {
+        "name": "Decalcificazione da fare"
+      }
+    },
+    "button": {
+      "cleaned": {
+        "name": "Pulito"
+      },
+      "descaled": {
+        "name": "Decalcificato"
+      }
+    },
+    "select": {
+      "drink": {
+        "name": "Bevanda",
+        "state": {
+          "none": "Nessuna",
+          "green_tea": "Tè verde",
+          "white_tea": "Tè bianco",
+          "matcha": "Matcha",
+          "oolong": "Oolong",
+          "coffee": "Caffè",
+          "yerba": "Yerba mate",
+          "black_tea": "Tè nero",
+          "herbal": "Tisana",
+          "formula": "Latte in polvere",
+          "honey": "Acqua e miele",
+          "oatmeal": "Porridge / noodles",
+          "drink_water": "Acqua tiepida"
+        }
+      }
+    },
+    "switch": {
+      "ready_at_enabled": {
+        "name": "Pronto alle – attivo"
+      }
+    },
+    "time": {
+      "ready_at": {
+        "name": "Pronto alle"
+      }
+    }
+  }
+}

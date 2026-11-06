@@ -22,7 +22,7 @@
  * Texts are generated from i18n/*.json by tools/build_i18n.py – edit the JSON files, not the TEXTS block.
  */
 
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 const CARD = "setti-kettle-card";
 
 // ---- kettle profiles: card presets, keep-warm chips, power and the heating rate used before the first boil
@@ -149,7 +149,10 @@ function findKettle(hass, config) {
     device = Object.keys(byDev).find((k) => byDev[k].wh) || Object.keys(byDev).find((k) => byDev[k].start && byDev[k].cur && byDev[k].keep)
       || Object.keys(byDev).find((k) => byDev[k].start && byDev[k].cur) || null;
   }
-  const devEnts = device ? Object.values(ents).filter((e) => e.device_id === device && !e.hidden && hass.states[e.entity_id]) : [];
+  const all = device ? Object.values(ents).filter((e) => e.device_id === device && hass.states[e.entity_id]) : [];
+  // entities of the SETTI Kettle integration on the kettle's device (counters, rate, energy, drink, ready at)
+  for (const e of all) if (e.platform === "setti_kettle" && e.translation_key) out["s_" + e.translation_key] = e.entity_id;
+  const devEnts = all.filter((e) => !e.hidden && e.platform !== "setti_kettle");
   for (const role of Object.keys(ROLES)) {
     if (cfg[role]) { out[role] = cfg[role]; continue; }
     const [doms, keys, re] = ROLES[role];
@@ -166,8 +169,10 @@ function findKettle(hass, config) {
     }
     if (hit) out[role] = hit.entity_id;
   }
+  const fromInt = { drink: out.s_drink, ready_at: out.s_ready_at, ready_at_on: out.s_ready_at_enabled };
   for (const k of ["start_temp", "drink", "ready_at", "ready_at_on"]) {
     if (cfg[k]) out[k] = cfg[k];
+    else if (fromInt[k]) out[k] = fromInt[k];
     else if (DEFAULT_HELPERS[k] && hass.states[DEFAULT_HELPERS[k]]) out[k] = DEFAULT_HELPERS[k];
   }
   return { device, ent: out };
@@ -276,7 +281,10 @@ class SettiKettleCard extends HTMLElement {
     vm.modeNow = mS ? mS.state : null;
 
     // heating rate and power
-    const learned = num(store.get("rate:" + vm.key));
+    // the integration learns the rate in Home Assistant (all browsers), else this browser does
+    vm.integration = !!ent.s_heating_rate;
+    const rS = st(ent.s_heating_rate);
+    const learned = rS && rS.attributes.learned ? num(rS.state) : vm.integration ? null : num(store.get("rate:" + vm.key));
     vm.rate = num(c.rate) || learned || (F ? (profile.rate || 40) * 1.8 : profile.rate || 40);
     vm.rateLearned = !c.rate && !!learned;
     vm.power = num(c.power) || profile.power || 2200;
@@ -354,25 +362,40 @@ class SettiKettleCard extends HTMLElement {
         if (at.getTime() < Date.now() - 60000) at.setDate(at.getDate() + 1);
         const need = vm.cur !== null ? Math.max(0, (vm.tgt - vm.cur) / vm.rate) + 0.5 : 3;
         const fmt = (d) => d.toLocaleTimeString(l, { hour: "2-digit", minute: "2-digit" });
-        vm.readyAt = { time: fmt(at), start: fmt(new Date(at.getTime() - need * 60000)), on: !!raOn && raOn.state === "on" };
+        const rsS = st(ent.s_ready_start);
+        const startAt = rsS && !isNaN(Date.parse(rsS.state)) ? new Date(rsS.state) : new Date(at.getTime() - need * 60000);
+        vm.readyAt = { time: fmt(at), start: fmt(startAt), on: !!raOn && raOn.state === "on" };
       }
     }
 
     // counters (optional) – descaling interval from the water hardness unless set
     const cc = c.counters || {};
     vm.counters = [];
+    // integration sensors (reset with its buttons), else counter helpers
+    const intC = { today: ent.s_boils_today, cleaning: ent.s_boils_since_cleaning, descaling: ent.s_boils_since_descaling };
+    const intReset = { cleaning: ent.s_cleaned, descaling: ent.s_descaled };
     const add = (key, icon, every) => {
-      const id = cc[key] || (cc[key] === undefined && hass.states[DEFAULT_COUNTERS[key]] ? DEFAULT_COUNTERS[key] : null);
+      const id = cc[key] || (cc[key] === undefined ? intC[key] || (hass.states[DEFAULT_COUNTERS[key]] ? DEFAULT_COUNTERS[key] : null) : null);
       if (!id || !hass.states[id]) return;
-      const v = num(hass.states[id].state) || 0;
-      vm.counters.push({ key, id, icon, v, every, due: every ? v >= every : false });
+      const s = hass.states[id];
+      const v = num(s.state) || 0;
+      const isInt = id === intC[key];
+      if (isInt && key !== "today" && !num(c[key + "_every"])) every = num(s.attributes.every) || every;
+      const reset = id.startsWith("counter.") ? { d: "counter", s: "reset", id } : isInt && intReset[key] ? { d: "button", s: "press", id: intReset[key] } : null;
+      vm.counters.push({ key, id, icon, v, every, due: every ? v >= every : false, reset });
     };
     add("today", "mdi:kettle", 0);
     add("cleaning", "mdi:spray-bottle", num(c.cleaning_every) || 20);
     add("descaling", "mdi:kettle-alert", num(c.descaling_every) || HARDNESS[c.water_hardness] || 60);
 
     // today's energy / cost and the last boil (from the recorder, refreshed by _fetchToday)
-    const td = this._today && this._today.day === midnight() ? this._today : null;
+    let td = this._today && this._today.day === midnight() ? this._today : null;
+    const eS = st(ent.s_energy_today), lS = st(ent.s_last_boil);
+    if (eS && !c.energy_entity) {
+      const lastAt = lS && Date.parse(lS.state);
+      td = { day: midnight(), minutes: 0, count: 0, kwh: num(eS.state) || 0,
+             last: lastAt && lastAt >= midnight() ? { at: lastAt, min: num(lS.attributes.minutes) || 0 } : null };
+    }
     if (td) {
       const kwh = td.kwh !== null ? td.kwh : vm.power / 1000 * td.minutes / 60;
       const priceS = c.price_entity && st(c.price_entity);
@@ -428,7 +451,7 @@ class SettiKettleCard extends HTMLElement {
   // today's boils from the recorder: heating minutes, the last boil, energy (estimated or from energy_entity)
   _fetchToday(vm) {
     const sw = vm.ent.start || vm.ent.water_heater;
-    if (!sw || !this._hass.callWS) return;
+    if (!sw || !this._hass.callWS || (vm.ent.s_energy_today && !this._config.energy_entity)) return;
     const day = midnight();
     const key = day + "|" + vm.changed;
     if (this._todayKey === key && Date.now() - (this._todayAt || 0) < 600000) return;
@@ -468,7 +491,7 @@ class SettiKettleCard extends HTMLElement {
   _learn(vm) {
     const was = this._wasOn;
     this._wasOn = vm.on ? { t0: vm.t0, at: vm.changed, tgt: vm.tgt } : null;
-    if (!was || vm.on || was.t0 === null || vm.cur === null) return;
+    if (!was || vm.on || was.t0 === null || vm.cur === null || vm.integration) return;
     const mins = (vm.changed - was.at) / 60000;
     if (mins < 0.5 || mins > 15 || vm.cur < was.tgt - 3 || vm.cur - was.t0 < 20) return;
     const r = (vm.cur - was.t0) / mins;
@@ -479,7 +502,7 @@ class SettiKettleCard extends HTMLElement {
   // second stage of a drink (formula: boil, then hold 45 °C) – when no helper lets the blueprint do it
   _stage2(vm) {
     const d = vm.drink;
-    if (!d || d.then == null || vm.ent.drink || vm.mode !== "done" || d.stage2 === vm.changed || d.at > vm.changed) return;
+    if (!d || d.then == null || vm.ent.drink || vm.integration || vm.mode !== "done" || d.stage2 === vm.changed || d.at > vm.changed) return;
     d.stage2 = vm.changed;
     store.set("drink:" + vm.key, d);
     this._setTarget(vm, d.then);
@@ -631,6 +654,17 @@ class SettiKettleCard extends HTMLElement {
     const d = vm.drinks.find((x) => x.key === key);
     if (!d) return;
     const e = vm.ent;
+    const rec = { key: d.key, name: d.name, icon: d.icon, t: d.t, then: d.then, keep: d.keep || 0, steep: d.steep || 0, at: Date.now() };
+    // the integration's drink select applies a built-in drink in Home Assistant (target, keep warm, its stages)
+    const sel = e.drink && e.drink.startsWith("select.") && this._hass.states[e.drink];
+    if (sel && (sel.attributes.options || []).includes(d.key) && d.t === this._snap(vm, DRINKS[d.key] ? (vm.F ? this._toF(DRINKS[d.key].temp) : DRINKS[d.key].temp) : d.t)) {
+      store.set("drink:" + vm.key, rec);
+      this._call("select", "select_option", { entity_id: e.drink, option: d.key });
+      if (andStart) setTimeout(() => this._start(vm), 1200);
+      this._sig = null;
+      this._render();
+      return;
+    }
     const mS = e.mode && this._hass.states[e.mode];
     const ent = this._hass.entities && this._hass.entities[e.mode];
     if (mS && ent && ent.translation_key === "kettle_work_mode") {
@@ -642,9 +676,8 @@ class SettiKettleCard extends HTMLElement {
       if (e.keep_warm_time) this._call("number", "set_value", { entity_id: e.keep_warm_time, value: Math.min(d.keep, vm.keepMax || d.keep) });
       if (e.keep_warm) this._call("switch", "turn_on", { entity_id: e.keep_warm });
     } else if (vm.keep && e.keep_warm) this._call("switch", "turn_off", { entity_id: e.keep_warm });
-    const rec = { key: d.key, name: d.name, icon: d.icon, t: d.t, then: d.then, keep: d.keep || 0, steep: d.steep || 0, at: Date.now() };
     store.set("drink:" + vm.key, rec);
-    if (e.drink && this._hass.states[e.drink]) {
+    if (e.drink && e.drink.startsWith("input_text.") && this._hass.states[e.drink]) {
       const v = JSON.stringify({ k: d.key, n: d.name, t: d.t, then: d.then, keep: d.keep || 0, steep: d.steep || 0 });
       this._call("input_text", "set_value", { entity_id: e.drink, value: v.slice(0, 255) });
     }
@@ -686,7 +719,7 @@ class SettiKettleCard extends HTMLElement {
     } else if (act === "keep_time") {
       this._call("number", "set_value", { entity_id: e.keep_warm_time, value: v });
     } else if (act === "ready_toggle") {
-      if (e.ready_at_on) this._call("input_boolean", "toggle", { entity_id: e.ready_at_on });
+      if (e.ready_at_on) this._call(e.ready_at_on.split(".")[0], "toggle", { entity_id: e.ready_at_on });
       else this._more(e.ready_at);
     } else if (act === "more") {
       this._more(el.dataset.id);
@@ -706,7 +739,8 @@ class SettiKettleCard extends HTMLElement {
       this._held = true;
       const vm = this._vm;
       if (el.dataset.hold === "reset") {
-        if (window.confirm(tr(this._hass, "reset_confirm", { n: el.dataset.name }))) this._call("counter", "reset", { entity_id: el.dataset.id });
+        const cnt = vm.counters.find((x) => x.id === el.dataset.id);
+        if (cnt && cnt.reset && window.confirm(tr(this._hass, "reset_confirm", { n: el.dataset.name }))) this._call(cnt.reset.d, cnt.reset.s, { entity_id: cnt.reset.id });
       } else if (el.dataset.act === "drink") {
         this._drink(vm, el.dataset.v, true);
       } else if (el.dataset.act === "target") {

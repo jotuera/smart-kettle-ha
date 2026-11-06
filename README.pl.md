@@ -19,8 +19,9 @@ plik JavaScript, bez innych kart custom, bez szablonów YAML.
 > Zbudowana na czajniku autora **Götze & Jensen KT975K** (integracja Tuya w HA), z karty button-card używanej od
 > września 2026. **SETTI+ KT950W** ma w HA te same encje. Inne czajniki: [docs/models.md](docs/models.md).
 >
-> **Status: beta (0.2.0).** Działa na czajniku autora; logika pokryta testami z atrapą HA. Napoje, parzenie,
-> „gotowe na” i blueprinty są nowe w 0.2.0.
+> **Status: beta (0.3.0).** Karta działa na czajniku autora; jej logika pokryta testami z atrapą HA.
+> **Nowe w 0.3.0: integracja Home Assistant**, która sama instaluje kartę i zastępuje pomocniki oraz blueprinty –
+> instalacja w trzech kliknięciach.
 
 <img src="docs/img/cards-pl.png" width="700" alt="Karta czajnika: gotowy, gotowanie, zagotowane, podtrzymywanie, napoje, kompakt">
 
@@ -88,21 +89,36 @@ drinks:
   - { name: Herbatka dla mamy, temp: 100, then: 70, keep: 30 }   # zagotuj, potem trzymaj 70 °C
 ```
 
-## Instalacja
+## Instalacja – trzy kliknięcia
 
-**HACS** (repozytorium niestandardowe): HACS → ⋮ → *Custom repositories* → `https://github.com/jotuera/setti-kettle-card`,
-typ *Dashboard* → zainstaluj *SETTI+ Kettle Card* → odśwież przeglądarkę.
+1. **HACS** → ⋮ → *Custom repositories* → `https://github.com/jotuera/setti-kettle-card`, typ **Integration** →
+   pobierz *SETTI Kettle* → zrestartuj Home Assistant.
+2. Ustawienia → Urządzenia i usługi → **Dodaj integrację** → *SETTI Kettle*. Czajnik zostanie znaleziony sam – wybierz
+   profil i zatwierdź.
+3. Dodaj kartę – *SETTI+ Kettle Card* w wyborze kart albo `type: custom:setti-kettle-card`.
 
-**Ręcznie:** skopiuj `dist/setti-kettle-card.js` do `/config/www/`, potem Ustawienia → Dashboardy → ⋮ → *Zasoby* →
-dodaj `/local/setti-kettle-card.js?v=0.2.0` jako *Moduł JavaScript* (po aktualizacji zmień `v=`).
+To wszystko: **bez zasobów Lovelace, pomocników, blueprintów i YAML.** Integracja sama serwuje kartę, dodaje swoje
+encje do urządzenia czajnika i robi w Home Assistant to, czego nie zrobi przeglądarka: liczy gotowania, uczy się tempa
+grzania, sumuje dzisiejszą energię, robi drugi etap napojów, powiadamia, gdy woda gotowa i gdy minie czas parzenia,
+oraz włącza czajnik na *gotowe na 6:30*.
 
-Dodaj kartę – *SETTI+ Kettle Card* w wyborze kart, albo:
+| Encja (na urządzeniu czajnika) | |
+|---|---|
+| *Gotowania dziś*, *Gotowania od mycia / odkamieniania* + przyciski *Umyty*, *Odkamieniony*, czujniki *Czas na mycie / odkamienianie* | liczniki |
+| *Tempo grzania* (wyuczone, °C/min), *Woda w ostatnim gotowaniu* (l), *Energia dziś* (kWh, gotowa do panelu Energia), *Koszt dziś*, *Ostatnie gotowanie* | pomiary |
+| *Napój* (select: 12 napojów – ustawia temperaturę i podtrzymanie, parzenie i 2. etap mleka w HA) | napoje |
+| *Gotowe na* (czas), *Gotowe na – wł.* (przełącznik), *Start „gotowe na”* | harmonogram |
 
-```yaml
-type: custom:setti-kettle-card
-```
+**Opcje** (*Konfiguruj* w integracji): profil, moc, cena za kWh lub encja ceny, co ile mycie / odkamienianie, próg
+gotowania, temperatura *gotowe na*, **powiadomienia** – wybierz aplikacje mobilne (albo skrypt, który dostaje `title`
+i `message`), powiadomienie gdy woda gotowa i po czasie parzenia.
 
-To wszystko dla czajnika w integracji Tuya: pierwszy czajnik zostanie znaleziony automatycznie.
+Integracja działa „nad” encjami samego czajnika (Tuya, tuya-local, LocalTuya) – nie potrzebuje konta w chmurze ani
+klucza lokalnego. Kilka czajników: dodaj integrację raz dla każdego.
+
+**Sama karta (bez integracji):** HACS instaluje jeden typ na repozytorium, więc skopiuj `dist/setti-kettle-card.js` do
+`/config/www/` i dodaj zasób `/local/setti-kettle-card.js?v=0.3.0` jako *Moduł JavaScript*. Karta liczy wtedy z
+opcjonalnymi pomocnikami i blueprintami poniżej, a to, czego się uczy, trzyma w przeglądarce.
 
 ## Konfiguracja
 
@@ -142,7 +158,7 @@ show: { header: true, presets: true, controls: true, keep_warm: true, ready_at: 
 Kolory idą za motywem; nadpiszesz je card-modem albo w motywie: `--setti-blue`, `--setti-purple`, `--setti-green`,
 `--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-teal`, `--setti-radius`.
 
-## Pomocniki i blueprinty (opcjonalnie)
+## Pomocniki i blueprinty (tylko dla samej karty – integracja robi to wszystko)
 
 Skopiuj [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) do `/config/packages/` (w `configuration.yaml`
 `homeassistant: packages: !include_dir_named packages`) i zrestartuj HA. Karta sama znajdzie pomocniki po ich id.
@@ -187,7 +203,8 @@ Czajniki z *trybami* herbat zamiast temperatury (Svensson, ProfiCook / Koenic, A
 
 ```bash
 python3 tools/build_i18n.py          # po zmianie i18n/*.json – wkleja teksty do karty
-python3 tools/build_i18n.py --check  # CI: komplet języków, karta aktualna
+python3 tools/build_integration.py   # po zmianie karty – kopiuje ją do integracji, buduje jej tłumaczenia
+python3 tools/build_i18n.py --check && python3 tools/build_integration.py --check   # CI
 node tests/test_card.js              # logika karty z atrapą Home Assistant
 python3 -m http.server 8781          # potem http://localhost:8781/tests/preview.html?lang=pl – wszystkie stany
 ```

@@ -19,8 +19,9 @@ custom cards, no YAML templates.
 > Built on the author's **Götze & Jensen KT975K** (Tuya core integration), from a button-card dashboard used since
 > September 2026. The **SETTI+ KT950W** has the same entities in HA. Other kettles: [docs/models.md](docs/models.md).
 >
-> **Status: beta (0.2.0).** Runs on the author's kettle; the logic is covered by tests with a mocked HA. Drinks,
-> steeping, ready-at and the blueprints are new in 0.2.0.
+> **Status: beta (0.3.0).** The card runs on the author's kettle; its logic is covered by tests with a mocked HA.
+> **New in 0.3.0: a Home Assistant integration** that installs the card by itself and replaces the helpers and
+> blueprints – install in three clicks.
 
 <img src="docs/img/cards-en.png" width="700" alt="Kettle card: ready, boiling, boiled, keeping warm, drinks, compact">
 
@@ -87,21 +88,36 @@ drinks:
   - { name: Mother's tea, temp: 100, then: 70, keep: 30 }   # boil, then hold 70 °C
 ```
 
-## Installation
+## Installation – three clicks
 
-**HACS** (custom repository): HACS → ⋮ → *Custom repositories* → `https://github.com/jotuera/setti-kettle-card`,
-type *Dashboard* → install *SETTI+ Kettle Card* → reload the browser.
+1. **HACS** → ⋮ → *Custom repositories* → `https://github.com/jotuera/setti-kettle-card`, type **Integration** →
+   download *SETTI Kettle* → restart Home Assistant.
+2. Settings → Devices & services → **Add integration** → *SETTI Kettle*. Your kettle is found by itself – pick the
+   profile and confirm.
+3. Add the card – *SETTI+ Kettle Card* in the card picker, or `type: custom:setti-kettle-card`.
 
-**Manual:** copy `dist/setti-kettle-card.js` to `/config/www/`, then Settings → Dashboards → ⋮ → *Resources* →
-add `/local/setti-kettle-card.js?v=0.2.0` as *JavaScript module* (change `v=` after an update).
+That is all: **no Lovelace resource, no helpers, no blueprints, no YAML.** The integration serves the card, adds its
+entities to the kettle's own device and does in Home Assistant what a browser cannot: counts the boils, learns the
+heating rate, sums today's energy, runs the drinks' second stage, notifies when the water is ready and when the
+steeping is over, and switches the kettle on for *ready at 6:30*.
 
-Add the card – *SETTI+ Kettle Card* in the card picker, or:
+| Entity (on the kettle's device) | |
+|---|---|
+| *Boils today*, *Boils since cleaning / descaling* + buttons *Cleaned*, *Descaled*, binary sensors *Cleaning / Descaling due* | counters |
+| *Heating rate* (learned, °C/min), *Water in the last boil* (l), *Energy today* (kWh, Energy dashboard ready), *Cost today*, *Last boil* | measured |
+| *Drink* (select: 12 drinks – sets temperature and keep warm, steeping and formula stage in HA) | drinks |
+| *Ready at* (time), *Ready at – on* (switch), *"Ready at" start* | schedule |
 
-```yaml
-type: custom:setti-kettle-card
-```
+**Options** (the integration's *Configure*): profile, power, price per kWh or a price entity, cleaning / descaling
+interval, boil threshold, the *ready at* temperature, **notifications** – pick mobile apps (or a script, which gets
+`title` and `message`), notify when the water is ready, when the steeping is over.
 
-That is all for a kettle in the Tuya integration: the first kettle is found automatically.
+The integration works on top of the kettle's own entities (Tuya, tuya-local, LocalTuya) – it needs no cloud account
+and no local key. Several kettles: add the integration once per kettle.
+
+**Card only (without the integration):** HACS can install one type per repository, so copy `dist/setti-kettle-card.js`
+to `/config/www/` and add `/local/setti-kettle-card.js?v=0.3.0` as a *JavaScript module* resource. The card then
+counts with the optional helpers and blueprints below and keeps what it learns in the browser.
 
 ## Configuration
 
@@ -141,7 +157,7 @@ show: { header: true, presets: true, controls: true, keep_warm: true, ready_at: 
 Colours follow the theme; override them with card-mod or a theme: `--setti-blue`, `--setti-purple`,
 `--setti-green`, `--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-teal`, `--setti-radius`.
 
-## Helpers and blueprints (optional)
+## Helpers and blueprints (card only – the integration does all of this)
 
 Copy [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) to `/config/packages/`
 (`homeassistant: packages: !include_dir_named packages` in `configuration.yaml`) and restart. The card finds the
@@ -186,7 +202,8 @@ Kettles with tea *modes* instead of a temperature (Svensson, ProfiCook / Koenic,
 
 ```bash
 python3 tools/build_i18n.py          # after editing i18n/*.json – inlines the texts into the card
-python3 tools/build_i18n.py --check  # CI: every language complete, card up to date
+python3 tools/build_integration.py   # after editing the card – copies it into the integration, builds its translations
+python3 tools/build_i18n.py --check && python3 tools/build_integration.py --check   # CI
 node tests/test_card.js              # card logic with a mocked Home Assistant
 python3 -m http.server 8781          # then http://localhost:8781/tests/preview.html?lang=pl – all states
 ```

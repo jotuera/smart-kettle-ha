@@ -1,0 +1,125 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SETTI Kettle",
+        "description": "{count} Wasserkocher gefunden. Karte, Zähler, Getränke und „fertig um“ werden dem Gerät hinzugefügt.",
+        "data": {
+          "device_id": "Wasserkocher",
+          "profile": "Kocher-Profil",
+          "power": "Leistung"
+        },
+        "data_description": {
+          "power": "Nennleistung – für Wassermenge und Energie. Leer = aus dem Profil."
+        }
+      }
+    },
+    "abort": {
+      "no_kettle": "Kein WLAN-Wasserkocher gefunden. Zuerst den Kocher in Home Assistant einbinden (Tuya, tuya-local oder LocalTuya).",
+      "already_configured": "Alle Wasserkocher sind bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SETTI Kettle",
+        "description": "Energie, Zähler, „fertig um“ und Benachrichtigungen.",
+        "data": {
+          "profile": "Kocher-Profil",
+          "power": "Leistung",
+          "price": "Preis pro kWh",
+          "price_entity": "Preis-Entität (statt festem Preis)",
+          "cleaning_every": "Reinigen alle … Kochvorgänge",
+          "descaling_every": "Entkalken alle … Kochvorgänge",
+          "boil_threshold": "Kochvorgang zählt über",
+          "ready_temperature": "Temperatur „fertig um“",
+          "notify": "Benachrichtigen",
+          "notify_boiled": "Benachrichtigen, wenn das Wasser fertig ist",
+          "notify_steeped": "Benachrichtigen nach der Ziehzeit"
+        },
+        "data_description": {
+          "boil_threshold": "Das Wasser muss 20 s darüber bleiben.",
+          "notify": "Mobile Apps oder Skripte (ein Skript erhält die Variablen title und message).",
+          "power": "Nennleistung – für Wassermenge und Energie. Leer = aus dem Profil."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "boils_today": {
+        "name": "Heute gekocht"
+      },
+      "boils_since_cleaning": {
+        "name": "Kochvorgänge seit Reinigung"
+      },
+      "boils_since_descaling": {
+        "name": "Kochvorgänge seit Entkalkung"
+      },
+      "heating_rate": {
+        "name": "Heizrate"
+      },
+      "water_amount": {
+        "name": "Wasser beim letzten Kochen"
+      },
+      "energy_today": {
+        "name": "Energie heute"
+      },
+      "cost_today": {
+        "name": "Kosten heute"
+      },
+      "last_boil": {
+        "name": "Letztes Kochen"
+      },
+      "ready_start": {
+        "name": "Start „fertig um“"
+      }
+    },
+    "binary_sensor": {
+      "cleaning_due": {
+        "name": "Reinigung fällig"
+      },
+      "descaling_due": {
+        "name": "Entkalkung fällig"
+      }
+    },
+    "button": {
+      "cleaned": {
+        "name": "Gereinigt"
+      },
+      "descaled": {
+        "name": "Entkalkt"
+      }
+    },
+    "select": {
+      "drink": {
+        "name": "Getränk",
+        "state": {
+          "none": "Keins",
+          "green_tea": "Grüner Tee",
+          "white_tea": "Weißer Tee",
+          "matcha": "Matcha",
+          "oolong": "Oolong",
+          "coffee": "Kaffee",
+          "yerba": "Mate",
+          "black_tea": "Schwarzer Tee",
+          "herbal": "Kräutertee",
+          "formula": "Babynahrung",
+          "honey": "Honigwasser",
+          "oatmeal": "Porridge / Nudeln",
+          "drink_water": "Warmes Wasser"
+        }
+      }
+    },
+    "switch": {
+      "ready_at_enabled": {
+        "name": "Fertig um – an"
+      }
+    },
+    "time": {
+      "ready_at": {
+        "name": "Fertig um"
+      }
+    }
+  }
+}

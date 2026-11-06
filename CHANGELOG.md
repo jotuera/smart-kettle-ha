@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0 – 2026-11-07
+
+- **SETTI Kettle integration** (`custom_components/setti_kettle`, HACS type *Integration*) – install in three clicks:
+  HACS → restart → *Add integration* (the kettle is found by itself). It serves the card (no Lovelace resource) and
+  adds its entities to the kettle's own device: boil counters with *Cleaned* / *Descaled* buttons and *due* binary
+  sensors, learned heating rate, water in the last boil, energy and cost today, last boil, a *Drink* select,
+  *Ready at* time + switch. In Home Assistant, without a browser: boil counting, the drinks' second stage
+  (formula), notifications when the water is ready and after steeping, *ready at*. Options: profile, power,
+  price, intervals, boil threshold, notification targets. Works on top of Tuya / tuya-local / LocalTuya, no local
+  key. Translations in 9 languages (drink names shared with the card).
+- **Card 0.3.0** uses the integration's entities when they are there (counters reset with its buttons, its rate,
+  energy, drink select and *ready at*); without the integration it works as before.
+- `tools/build_integration.py` copies the card into the integration and builds its translations; CI checks it and
+  runs hassfest. 24 card tests.
+
 ## 0.2.0 – 2026-11-07
 
 - **Drinks** – a *Drinks* tab next to the temperatures: 12 drinks (green / white / black tea, matcha, oolong, coffee,
