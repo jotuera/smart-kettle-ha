@@ -1,3 +1,5 @@
+<img src="custom_components/smart_kettle/brand/icon@2x.png" alt="Smart Kettle" width="96" align="right">
+
 # Smart Kettle
 
 **English** · [Polski](README.pl.md)

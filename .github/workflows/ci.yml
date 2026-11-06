@@ -59,4 +59,5 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          ignore: brands description topics
+          # PolyForm Noncommercial is not recognised by GitHub (SPDX NOASSERTION) – fine for a custom repository
+          ignore: brands description topics license
