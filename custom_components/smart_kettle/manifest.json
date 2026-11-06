@@ -1,0 +1,15 @@
+{
+  "domain": "smart_kettle",
+  "name": "Smart Kettle",
+  "after_dependencies": ["recorder", "tuya"],
+  "codeowners": ["@jotuera"],
+  "config_flow": true,
+  "dependencies": ["frontend", "http"],
+  "documentation": "https://github.com/jotuera/smart-kettle-ha",
+  "integration_type": "helper",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/jotuera/smart-kettle-ha/issues",
+  "loggers": ["custom_components.smart_kettle"],
+  "requirements": [],
+  "version": "0.3.0"
+}

@@ -25,13 +25,13 @@ jobs:
       - name: Languages complete and card up to date
         run: python3 tools/build_i18n.py --check
       - name: Card syntax
-        run: node --check dist/setti-kettle-card.js
+        run: node --check dist/smart-kettle-card.js
       - name: Card logic (mocked Home Assistant)
         run: node tests/test_card.js
       - name: Integration – bundled card and translations up to date, Python compiles
         run: |
           python3 tools/build_integration.py --check
-          python3 -m py_compile custom_components/setti_kettle/*.py tools/*.py
+          python3 -m py_compile custom_components/smart_kettle/*.py tools/*.py
       - name: YAML files parse
         run: |
           pip install pyyaml

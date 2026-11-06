@@ -1,0 +1,123 @@
+blueprint:
+  name: Kettle – boiled, steeping, formula (smart-kettle-card)
+  description: >-
+    When the kettle has reached its temperature: runs your "boiled" actions (notification, TTS, a light…);
+    for a drink with a steeping time chosen on smart-kettle-card waits the steeping time and runs your
+    "steeped" actions; for baby formula (boil, then hold 45 °C) sets the second temperature and keep warm –
+    without an open browser. The drink comes from the helper input_text.kettle_drink
+    (packages/smart_kettle.yaml). In the actions you can use {{ drink_name }}, {{ temperature }} and {{ steep }}.
+    https://github.com/jotuera/smart-kettle-ha
+  domain: automation
+  source_url: https://github.com/jotuera/smart-kettle-ha/blob/main/blueprints/automation/jotuera/smart_kettle_ready.yaml
+  input:
+    start:
+      name: Kettle Start switch
+      selector:
+        entity:
+          domain: switch
+    temperature_sensor:
+      name: Kettle current temperature
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    target:
+      name: Kettle target temperature
+      selector:
+        entity:
+          domain: number
+    keep_warm:
+      name: Kettle keep warm switch (for formula)
+      default: []
+      selector:
+        entity:
+          domain: switch
+    keep_warm_time:
+      name: Kettle keep warm time (for formula)
+      default: []
+      selector:
+        entity:
+          domain: number
+    drink_helper:
+      name: Drink helper
+      default: input_text.kettle_drink
+      selector:
+        entity:
+          domain: input_text
+    boiled_actions:
+      name: When ready
+      description: e.g. a notification "{{ drink_name }} – water ready" or a TTS message
+      default: []
+      selector:
+        action: {}
+    steeped_actions:
+      name: When steeped
+      description: e.g. "{{ drink_name }} – take the tea out" (only drinks with a steeping time)
+      default: []
+      selector:
+        action: {}
+
+mode: restart
+
+variables:
+  sensor: !input temperature_sensor
+  target_entity: !input target
+  helper: !input drink_helper
+  keep_warm: !input keep_warm
+  keep_warm_time: !input keep_warm_time
+  raw: "{{ states(helper) if helper else '' }}"
+  fresh: >-
+    {{ helper != '' and states[helper] is not none
+       and (now() - states[helper].last_changed).total_seconds() < 6 * 3600 }}
+  drink: "{{ raw | from_json if fresh and raw[:1] == '{' else {} }}"
+  drink_name: "{{ drink.get('n', '') }}"
+  steep: "{{ drink.get('steep', 0) | float(0) }}"
+  then: "{{ drink.get('then') }}"
+  temperature: "{{ states(sensor) | float(0) | round(0) }}"
+
+triggers:
+  - trigger: state
+    entity_id: !input start
+    from: "on"
+    to: "off"
+
+conditions:
+  - condition: template
+    value_template: "{{ states(sensor) | float(0) >= states(target_entity) | float(100) - 5 }}"
+
+actions:
+  - if:
+      - condition: template
+        value_template: "{{ then is number }}"
+    then:
+      - action: number.set_value
+        target:
+          entity_id: !input target
+        data:
+          value: "{{ then }}"
+      - if:
+          - condition: template
+            value_template: "{{ keep_warm_time not in ['', none, []] }}"
+        then:
+          - action: number.set_value
+            target:
+              entity_id: !input keep_warm_time
+            data:
+              value: "{{ [drink.get('keep', 120) | int(120), state_attr(keep_warm_time, 'max') | int(120)] | min }}"
+      - if:
+          - condition: template
+            value_template: "{{ keep_warm not in ['', none, []] }}"
+        then:
+          - action: switch.turn_on
+            target:
+              entity_id: !input keep_warm
+  - choose: []
+    default: !input boiled_actions
+  - if:
+      - condition: template
+        value_template: "{{ steep > 0 }}"
+    then:
+      - delay:
+          seconds: "{{ (steep * 60) | int }}"
+      - choose: []
+        default: !input steeped_actions

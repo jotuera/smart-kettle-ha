@@ -4,7 +4,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>setti-kettle-card preview</title>
+<title>smart-kettle-card preview</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 <style>
   body { margin: 0; padding: 24px; font-family: Roboto, "Segoe UI", sans-serif; background: #1e1e2e; color: #cdd6f4;
@@ -33,7 +33,7 @@
     }
   });
 </script>
-<script src="../dist/setti-kettle-card.js"></script>
+<script src="../dist/smart-kettle-card.js"></script>
 <script>
   const q = new URLSearchParams(location.search);
   const lang = q.get("lang") || "en";
@@ -69,9 +69,9 @@
              callService: (d, s, data) => console.log("callService", d, s, JSON.stringify(data)),
              callWS: (m) => Promise.resolve(m.end_time ? {} : hist), formatEntityState: (s) => s.state };
   }
-  const drink = (key, name, icon, t, steep, agoMin) => localStorage.setItem("setti-kettle-card:drink:d5", JSON.stringify({ key, name, icon, t, steep, at: Date.now() - agoMin * 60000 }));
-  localStorage.removeItem("setti-kettle-card:drink:k");
-  localStorage.removeItem("setti-kettle-card:tab:k");
+  const drink = (key, name, icon, t, steep, agoMin) => localStorage.setItem("smart-kettle-card:drink:d5", JSON.stringify({ key, name, icon, t, steep, at: Date.now() - agoMin * 60000 }));
+  localStorage.removeItem("smart-kettle-card:drink:k");
+  localStorage.removeItem("smart-kettle-card:tab:k");
   const scenes = [
     ["idle", {}, {}],
     ["heating – about 0.7 l of water", { on: true, changed: 1, cur: 62, status: "heating", t0: 21, today: 2 }, { entities: { start_temp: "input_number.t0" } }],
@@ -86,7 +86,7 @@
 
     const box = document.createElement("div");
     box.innerHTML = `<h4>${name}</h4>`;
-    const c = document.createElement("setti-kettle-card");
+    const c = document.createElement("smart-kettle-card");
     c.setConfig(Object.assign({ counters: { today: "counter.kettle_boils_today", cleaning: "counter.kettle_boils_since_cleaning", descaling: "counter.kettle_boils_since_descaling" } }, cfg));
     box.appendChild(c);
     grid.appendChild(box);

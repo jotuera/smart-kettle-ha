@@ -21,10 +21,10 @@ const sandbox = {
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
-vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "dist", "setti-kettle-card.js"), "utf8"), sandbox);
-const Card = defined["setti-kettle-card"];
+vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "dist", "smart-kettle-card.js"), "utf8"), sandbox);
+const Card = defined["smart-kettle-card"];
 assert(Card, "card defined");
-assert(defined["setti-kettle-card-editor"], "editor defined");
+assert(defined["smart-kettle-card-editor"], "editor defined");
 
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
 function makeHass({ lang = "en", unit = "°C", cur = 21, tgt = 100, on = false, changed = 30, keep = false, status = "standby",
@@ -63,8 +63,8 @@ function makeHass({ lang = "en", unit = "°C", cur = 21, tgt = 100, on = false, 
   }
   if (mode) add("select.czajnik_work_mode", mode[0], { options: mode }, "kettle_work_mode");
   if (integration) {
-    // entities of the SETTI Kettle integration on the kettle's device
-    const si = (id, state, attributes, tk) => { add(id, state, attributes, tk); entities[id].platform = "setti_kettle"; };
+    // entities of the Smart Kettle integration on the kettle's device
+    const si = (id, state, attributes, tk) => { add(id, state, attributes, tk); entities[id].platform = "smart_kettle"; };
     si("sensor.czajnik_boils_today", 4, {}, "boils_today");
     si("sensor.czajnik_boils_since_cleaning", 7, { every: 20 }, "boils_since_cleaning");
     si("sensor.czajnik_boils_since_descaling", 70, { every: 60 }, "boils_since_descaling");
@@ -241,7 +241,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   ok("steeping countdown after the drink is ready", () => {
     clear();
-    store["setti-kettle-card:drink:kettle1"] = JSON.stringify({ key: "green_tea", name: "Green tea", icon: "mdi:leaf", t: 80, steep: 2.5, at: Date.now() - 3 * 60000 });
+    store["smart-kettle-card:drink:kettle1"] = JSON.stringify({ key: "green_tea", name: "Green tea", icon: "mdi:leaf", t: 80, steep: 2.5, at: Date.now() - 3 * 60000 });
     const c = card({}, makeHass({ on: false, changed: 1, cur: 80, tgt: 80 }));
     assert.strictEqual(c._vm.mode, "done");
     assert.strictEqual(c._vm.steeping, true);
@@ -253,7 +253,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   ok("formula: after boiling the card sets 45 °C and keep warm (no helper)", () => {
     clear();
-    store["setti-kettle-card:drink:kettle1"] = JSON.stringify({ key: "formula", name: "Baby formula", icon: "mdi:baby-bottle-outline", t: 100, then: 45, keep: 120, at: Date.now() - 5 * 60000 });
+    store["smart-kettle-card:drink:kettle1"] = JSON.stringify({ key: "formula", name: "Baby formula", icon: "mdi:baby-bottle-outline", t: 100, then: 45, keep: 120, at: Date.now() - 5 * 60000 });
     const h = makeHass({ on: false, changed: 0.5, cur: 99, tgt: 100 });
     const c = card({}, h);
     assert(/cooling down to 45 °C/.test(c._vm.info), c._vm.info);
@@ -318,7 +318,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     n++; console.log("ok  energy today and the last boil from the recorder");
   }
 
-  ok("with the SETTI Kettle integration: its counters, rate, energy, drink select and ready at", () => {
+  ok("with the Smart Kettle integration: its counters, rate, energy, drink select and ready at", () => {
     clear();
     const h = makeHass({ integration: true, counters: false });
     const c = card({}, h);

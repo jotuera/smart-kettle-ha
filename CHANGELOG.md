@@ -2,7 +2,10 @@
 
 ## 0.3.0 – 2026-11-07
 
-- **SETTI Kettle integration** (`custom_components/setti_kettle`, HACS type *Integration*) – install in three clicks:
+- **New name: Smart Kettle** – the project works with any Tuya / Smart Life kettle, not only SETTI+. Repository
+  `smart-kettle-ha`, integration `smart_kettle`, card `custom:smart-kettle-card` (was `custom:setti-kettle-card`),
+  blueprints and package `smart_kettle_*`, theme variables `--kettle-*` (were `--setti-*`).
+- **Smart Kettle integration** (`custom_components/smart_kettle`, HACS type *Integration*) – install in three clicks:
   HACS → restart → *Add integration* (the kettle is found by itself). It serves the card (no Lovelace resource) and
   adds its entities to the kettle's own device: boil counters with *Cleaned* / *Descaled* buttons and *due* binary
   sensors, learned heating rate, water in the last boil, energy and cost today, last boil, a *Drink* select,
@@ -26,9 +29,9 @@
 - **Amount of water** from the heating rate and the kettle's power, *little water?* warning.
 - **Energy and cost today**, the last boil – from the recorder, estimated from the power or from a plug's kWh meter
   (`energy_entity`); price fixed or from an entity.
-- **Ready at** a time – row on the card + blueprint `setti_kettle_ready_at.yaml` (start computed from the water
+- **Ready at** a time – row on the card + blueprint `smart_kettle_ready_at.yaml` (start computed from the water
   temperature and the heating rate).
-- **Blueprint `setti_kettle_ready.yaml`** – your actions when the water is ready and after steeping (notification,
+- **Blueprint `smart_kettle_ready.yaml`** – your actions when the water is ready and after steeping (notification,
   TTS), the formula's second step without a browser; helper `input_text.kettle_drink`.
 - **Modes tab** for kettles with a mode select (tea modes in tuya-local, *Work mode* in core Tuya); a drink picks the
   kettle's work mode when it has one.

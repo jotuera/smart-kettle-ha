@@ -1,15 +1,15 @@
-# SETTI+ Kettle Card
+# Smart Kettle
 
 [English](README.md) · **Polski**
 
-[![CI](https://github.com/jotuera/setti-kettle-card/actions/workflows/ci.yml/badge.svg)](https://github.com/jotuera/setti-kettle-card/actions/workflows/ci.yml)
+[![CI](https://github.com/jotuera/smart-kettle-ha/actions/workflows/ci.yml/badge.svg)](https://github.com/jotuera/smart-kettle-ha/actions/workflows/ci.yml)
 [![HACS](https://img.shields.io/badge/HACS-custom-41BDF5)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.8%2B-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io)
 [![Języki](https://img.shields.io/badge/j%C4%99zyki-9-8A2BE2)](i18n)
 [![Licencja](https://img.shields.io/badge/licencja-PolyForm%20Noncommercial-blue)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-jotuera-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/jotuera)
 
-**Karta Lovelace do czajników Wi-Fi Tuya / Smart Life – SETTI+ KT950W, Götze & Jensen KT975K i innych.** W Home
+**Integracja Home Assistant i karta Lovelace do czajników Wi-Fi Tuya / Smart Life – SETTI+ KT950W, Götze & Jensen KT975K, AENO, Lidl SilverCrest i innych.** W Home
 Assistant inteligentny czajnik to przełącznik, liczba i czujnik temperatury. Ta karta robi z nich czajnik: ile
 zostało do celu i ile to potrwa, ile wody nalałeś, temperatury **i napoje** jednym dotknięciem (zielona herbata
 80 °C z odliczaniem parzenia, mleko modyfikowane zagotowane i trzymane w 45 °C…), Gotuj / Stop, podtrzymywanie,
@@ -91,11 +91,11 @@ drinks:
 
 ## Instalacja – trzy kliknięcia
 
-1. **HACS** → ⋮ → *Custom repositories* → `https://github.com/jotuera/setti-kettle-card`, typ **Integration** →
-   pobierz *SETTI Kettle* → zrestartuj Home Assistant.
-2. Ustawienia → Urządzenia i usługi → **Dodaj integrację** → *SETTI Kettle*. Czajnik zostanie znaleziony sam – wybierz
+1. **HACS** → ⋮ → *Custom repositories* → `https://github.com/jotuera/smart-kettle-ha`, typ **Integration** →
+   pobierz *Smart Kettle* → zrestartuj Home Assistant.
+2. Ustawienia → Urządzenia i usługi → **Dodaj integrację** → *Smart Kettle*. Czajnik zostanie znaleziony sam – wybierz
    profil i zatwierdź.
-3. Dodaj kartę – *SETTI+ Kettle Card* w wyborze kart albo `type: custom:setti-kettle-card`.
+3. Dodaj kartę – *Smart Kettle Card* w wyborze kart albo `type: custom:smart-kettle-card`.
 
 To wszystko: **bez zasobów Lovelace, pomocników, blueprintów i YAML.** Integracja sama serwuje kartę, dodaje swoje
 encje do urządzenia czajnika i robi w Home Assistant to, czego nie zrobi przeglądarka: liczy gotowania, uczy się tempa
@@ -116,14 +116,14 @@ i `message`), powiadomienie gdy woda gotowa i po czasie parzenia.
 Integracja działa „nad” encjami samego czajnika (Tuya, tuya-local, LocalTuya) – nie potrzebuje konta w chmurze ani
 klucza lokalnego. Kilka czajników: dodaj integrację raz dla każdego.
 
-**Sama karta (bez integracji):** HACS instaluje jeden typ na repozytorium, więc skopiuj `dist/setti-kettle-card.js` do
-`/config/www/` i dodaj zasób `/local/setti-kettle-card.js?v=0.3.0` jako *Moduł JavaScript*. Karta liczy wtedy z
+**Sama karta (bez integracji):** HACS instaluje jeden typ na repozytorium, więc skopiuj `dist/smart-kettle-card.js` do
+`/config/www/` i dodaj zasób `/local/smart-kettle-card.js?v=0.3.0` jako *Moduł JavaScript*. Karta liczy wtedy z
 opcjonalnymi pomocnikami i blueprintami poniżej, a to, czego się uczy, trzyma w przeglądarce.
 
 ## Konfiguracja
 
 ```yaml
-type: custom:setti-kettle-card
+type: custom:smart-kettle-card
 title: Czajnik                       # "" ukrywa nagłówek
 profile: setti_kt950w                # zob. docs/models.md – temperatury, czasy podtrzymania i moc Twojego czajnika
 presets: [40, 55, 70, 85, 100]       # opcjonalnie – zastępuje profil
@@ -141,8 +141,8 @@ entities:                            # opcjonalnie – tylko to, czego nie znala
   keep_warm_time: number.czajnik_heat_preservation_time
   # mode: select.czajnik_work_mode       # tryby herbat / tryb pracy
   # water_heater: water_heater.czajnik   # tuya-local zamiast start / target / current
-  # drink / ready_at / ready_at_on       # pomocniki – domyślnie te z packages/setti_kettle.yaml
-counters:                            # opcjonalnie – domyślnie pomocniki z packages/setti_kettle.yaml
+  # drink / ready_at / ready_at_on       # pomocniki – domyślnie te z packages/smart_kettle.yaml
+counters:                            # opcjonalnie – domyślnie pomocniki z packages/smart_kettle.yaml
   today: counter.kettle_boils_today
   cleaning: counter.kettle_boils_since_cleaning
   descaling: counter.kettle_boils_since_descaling
@@ -155,21 +155,21 @@ rate: 40                             # opcjonalnie °C/min – stałe zamiast wy
 show: { header: true, presets: true, controls: true, keep_warm: true, ready_at: true, counters: true, stats: true }
 ```
 
-Kolory idą za motywem; nadpiszesz je card-modem albo w motywie: `--setti-blue`, `--setti-purple`, `--setti-green`,
-`--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-teal`, `--setti-radius`.
+Kolory idą za motywem; nadpiszesz je card-modem albo w motywie: `--kettle-blue`, `--kettle-purple`, `--kettle-green`,
+`--kettle-red`, `--kettle-yellow`, `--kettle-peach`, `--kettle-teal`, `--kettle-radius`.
 
 ## Pomocniki i blueprinty (tylko dla samej karty – integracja robi to wszystko)
 
-Skopiuj [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) do `/config/packages/` (w `configuration.yaml`
+Skopiuj [`packages/smart_kettle.yaml`](packages/smart_kettle.yaml) do `/config/packages/` (w `configuration.yaml`
 `homeassistant: packages: !include_dir_named packages`) i zrestartuj HA. Karta sama znajdzie pomocniki po ich id.
 Zaimportuj blueprinty (Ustawienia → Automatyzacje → Blueprinty → *Importuj*, wklej adres pliku na GitHubie) i utwórz
 automatyzację z każdego, którego chcesz:
 
 | Blueprint | Co robi | Używa |
 |---|---|---|
-| [`setti_kettle_boil_counter.yaml`](blueprints/automation/jotuera/setti_kettle_boil_counter.yaml) | liczy gotowanie, gdy woda trzyma powyżej 90 °C przez 20 s (najwyżej raz na 10 min); *gotowania dziś* zerują się o północy | trzy liczniki |
-| [`setti_kettle_ready.yaml`](blueprints/automation/jotuera/setti_kettle_ready.yaml) | gdy woda gotowa – Twoje akcje (powiadomienie, TTS, światło); dla napoju z parzeniem czeka i uruchamia akcje *po parzeniu* (`{{ drink_name }}`, `{{ steep }}`); dla mleka ustawia 45 °C i podtrzymanie | `input_text.kettle_drink` |
-| [`setti_kettle_ready_at.yaml`](blueprints/automation/jotuera/setti_kettle_ready_at.yaml) | *gotowe na 6:30* – włącza czajnik odpowiednio wcześniej (z temperatury wody i tempa grzania), raz dziennie | `input_datetime.kettle_ready_at`, `input_boolean.kettle_ready_at` |
+| [`smart_kettle_boil_counter.yaml`](blueprints/automation/jotuera/smart_kettle_boil_counter.yaml) | liczy gotowanie, gdy woda trzyma powyżej 90 °C przez 20 s (najwyżej raz na 10 min); *gotowania dziś* zerują się o północy | trzy liczniki |
+| [`smart_kettle_ready.yaml`](blueprints/automation/jotuera/smart_kettle_ready.yaml) | gdy woda gotowa – Twoje akcje (powiadomienie, TTS, światło); dla napoju z parzeniem czeka i uruchamia akcje *po parzeniu* (`{{ drink_name }}`, `{{ steep }}`); dla mleka ustawia 45 °C i podtrzymanie | `input_text.kettle_drink` |
+| [`smart_kettle_ready_at.yaml`](blueprints/automation/jotuera/smart_kettle_ready_at.yaml) | *gotowe na 6:30* – włącza czajnik odpowiednio wcześniej (z temperatury wody i tempa grzania), raz dziennie | `input_datetime.kettle_ready_at`, `input_boolean.kettle_ready_at` |
 
 Po myciu lub odkamienianiu **przytrzymaj** licznik na karcie, aby go wyzerować. Własne liczniki też działają – wskaż je
 w `counters:`.
@@ -194,7 +194,7 @@ Czajniki z *trybami* herbat zamiast temperatury (Svensson, ProfiCook / Koenic, A
 - **Czas przed startem** liczony jest z wyuczonego tempa (albo 40 °C/min z profilu). Pół czajnika grzeje się mniej
   więcej dwa razy szybciej – w trakcie grzania czas i ilość wody liczone są z bieżącego tempa (± 20 %: sprawność
   i masa samego czajnika są szacowane).
-- **Parzenie i drugi krok mleka w karcie** wymagają otwartej karty w przeglądarce; blueprint `setti_kettle_ready.yaml`
+- **Parzenie i drugi krok mleka w karcie** wymagają otwartej karty w przeglądarce; blueprint `smart_kettle_ready.yaml`
   robi to w samym Home Assistant.
 - **Energia** jest szacowana z czasu grzania i mocy (licznik gniazdka niepotrzebny); z `energy_entity` brany jest
   prawdziwy odczyt gniazdka.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inline i18n/*.json into dist/setti-kettle-card.js (between TEXTS-BEGIN / TEXTS-END).
+"""Inline i18n/*.json into dist/smart-kettle-card.js (between TEXTS-BEGIN / TEXTS-END).
 
     python3 tools/build_i18n.py          # write the card
     python3 tools/build_i18n.py --check  # CI: every language has every English key, no extra keys,
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CARD = ROOT / "dist" / "setti-kettle-card.js"
+CARD = ROOT / "dist" / "smart-kettle-card.js"
 I18N = ROOT / "i18n"
 LANGS = ["en", "pl", "de", "cs", "sk", "fr", "it", "es", "nl"]
 
@@ -64,7 +64,7 @@ def main():
     new = src[: m.start(2)] + block(texts) + src[m.end(2):]
     if check:
         if new != src:
-            print("dist/setti-kettle-card.js is out of date – run python3 tools/build_i18n.py")
+            print("dist/smart-kettle-card.js is out of date – run python3 tools/build_i18n.py")
             sys.exit(1)
         print(f"ok – {len(LANGS)} languages, {len(texts['en'])} keys")
         return

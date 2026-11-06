@@ -1,0 +1,86 @@
+blueprint:
+  name: Kettle – count boils (smart-kettle-card)
+  description: >-
+    Counts the boils of a Wi-Fi kettle for the counters of smart-kettle-card: a boil is counted when the water
+    stays above the threshold for 20 s, at most once per cool-down time (keep warm near the threshold is not
+    counted twice). Resets the "today" counter at midnight. Helpers: packages/smart_kettle.yaml.
+    https://github.com/jotuera/smart-kettle-ha
+  domain: automation
+  source_url: https://github.com/jotuera/smart-kettle-ha/blob/main/blueprints/automation/jotuera/smart_kettle_boil_counter.yaml
+  input:
+    temperature:
+      name: Kettle current temperature
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    counters:
+      name: Counters to increment
+      description: Usually all three – boils today, since cleaning, since descaling
+      default: [counter.kettle_boils_today, counter.kettle_boils_since_cleaning, counter.kettle_boils_since_descaling]
+      selector:
+        entity:
+          domain: counter
+          multiple: true
+    today:
+      name: Counter reset at midnight
+      default: counter.kettle_boils_today
+      selector:
+        entity:
+          domain: counter
+    threshold:
+      name: Boil threshold
+      description: 90 °C (194 °F) counts boils to 100 °C; lower it to count heating to 80 °C as well
+      default: 90
+      selector:
+        number:
+          min: 40
+          max: 212
+          unit_of_measurement: "°"
+    cooldown:
+      name: Cool-down time
+      description: A new boil is counted only this long after the previous one
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: min
+
+mode: single
+max_exceeded: silent
+
+variables:
+  cooldown: !input cooldown
+
+triggers:
+  - trigger: numeric_state
+    entity_id: !input temperature
+    above: !input threshold
+    for:
+      seconds: 20
+    id: boil
+  - trigger: time
+    at: "00:00:00"
+    id: midnight
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: boil
+          - condition: template
+            value_template: >-
+              {{ this.attributes.last_triggered is none
+                 or (now() - this.attributes.last_triggered).total_seconds() > cooldown * 60 }}
+        sequence:
+          - action: counter.increment
+            target:
+              entity_id: !input counters
+      - conditions:
+          - condition: trigger
+            id: midnight
+        sequence:
+          - action: counter.reset
+            target:
+              entity_id: !input today

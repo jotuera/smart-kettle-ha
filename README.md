@@ -1,15 +1,15 @@
-# SETTI+ Kettle Card
+# Smart Kettle
 
 **English** · [Polski](README.pl.md)
 
-[![CI](https://github.com/jotuera/setti-kettle-card/actions/workflows/ci.yml/badge.svg)](https://github.com/jotuera/setti-kettle-card/actions/workflows/ci.yml)
+[![CI](https://github.com/jotuera/smart-kettle-ha/actions/workflows/ci.yml/badge.svg)](https://github.com/jotuera/smart-kettle-ha/actions/workflows/ci.yml)
 [![HACS](https://img.shields.io/badge/HACS-custom-41BDF5)](https://hacs.xyz)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.8%2B-41BDF5?logo=homeassistant&logoColor=white)](https://www.home-assistant.io)
 [![Languages](https://img.shields.io/badge/languages-9-8A2BE2)](i18n)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-jotuera-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/jotuera)
 
-**A Lovelace card for Tuya / Smart Life Wi-Fi kettles – SETTI+ KT950W, Götze & Jensen KT975K and others.** In Home
+**A Home Assistant integration and Lovelace card for Tuya / Smart Life Wi-Fi kettles – SETTI+ KT950W, Götze & Jensen KT975K, AENO, Lidl SilverCrest and others.** In Home
 Assistant a smart kettle is a switch, a number and a temperature sensor. This card turns them into a kettle: how far it
 is to the target and how long it will take, how much water you poured in, one-tap temperatures **and drinks** (green
 tea 80 °C with a steeping countdown, baby formula boiled and held at 45 °C…), Boil / Stop, keep warm, *ready at 6:30*,
@@ -90,11 +90,11 @@ drinks:
 
 ## Installation – three clicks
 
-1. **HACS** → ⋮ → *Custom repositories* → `https://github.com/jotuera/setti-kettle-card`, type **Integration** →
-   download *SETTI Kettle* → restart Home Assistant.
-2. Settings → Devices & services → **Add integration** → *SETTI Kettle*. Your kettle is found by itself – pick the
+1. **HACS** → ⋮ → *Custom repositories* → `https://github.com/jotuera/smart-kettle-ha`, type **Integration** →
+   download *Smart Kettle* → restart Home Assistant.
+2. Settings → Devices & services → **Add integration** → *Smart Kettle*. Your kettle is found by itself – pick the
    profile and confirm.
-3. Add the card – *SETTI+ Kettle Card* in the card picker, or `type: custom:setti-kettle-card`.
+3. Add the card – *Smart Kettle Card* in the card picker, or `type: custom:smart-kettle-card`.
 
 That is all: **no Lovelace resource, no helpers, no blueprints, no YAML.** The integration serves the card, adds its
 entities to the kettle's own device and does in Home Assistant what a browser cannot: counts the boils, learns the
@@ -115,14 +115,14 @@ interval, boil threshold, the *ready at* temperature, **notifications** – pick
 The integration works on top of the kettle's own entities (Tuya, tuya-local, LocalTuya) – it needs no cloud account
 and no local key. Several kettles: add the integration once per kettle.
 
-**Card only (without the integration):** HACS can install one type per repository, so copy `dist/setti-kettle-card.js`
-to `/config/www/` and add `/local/setti-kettle-card.js?v=0.3.0` as a *JavaScript module* resource. The card then
+**Card only (without the integration):** HACS can install one type per repository, so copy `dist/smart-kettle-card.js`
+to `/config/www/` and add `/local/smart-kettle-card.js?v=0.3.0` as a *JavaScript module* resource. The card then
 counts with the optional helpers and blueprints below and keeps what it learns in the browser.
 
 ## Configuration
 
 ```yaml
-type: custom:setti-kettle-card
+type: custom:smart-kettle-card
 title: Kettle                        # "" hides the header
 profile: setti_kt950w                # see docs/models.md – presets, keep-warm times and power of your kettle
 presets: [40, 55, 70, 85, 100]       # optional – overrides the profile
@@ -140,8 +140,8 @@ entities:                            # optional – only what was not found
   keep_warm_time: number.kettle_heat_preservation_time
   # mode: select.kettle_work_mode        # tea modes / work mode
   # water_heater: water_heater.kettle    # tuya-local instead of start / target / current
-  # drink / ready_at / ready_at_on       # helpers – default: those of packages/setti_kettle.yaml
-counters:                            # optional – default: the helpers of packages/setti_kettle.yaml
+  # drink / ready_at / ready_at_on       # helpers – default: those of packages/smart_kettle.yaml
+counters:                            # optional – default: the helpers of packages/smart_kettle.yaml
   today: counter.kettle_boils_today
   cleaning: counter.kettle_boils_since_cleaning
   descaling: counter.kettle_boils_since_descaling
@@ -154,21 +154,21 @@ rate: 40                             # optional °C/min – fixed instead of lea
 show: { header: true, presets: true, controls: true, keep_warm: true, ready_at: true, counters: true, stats: true }
 ```
 
-Colours follow the theme; override them with card-mod or a theme: `--setti-blue`, `--setti-purple`,
-`--setti-green`, `--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-teal`, `--setti-radius`.
+Colours follow the theme; override them with card-mod or a theme: `--kettle-blue`, `--kettle-purple`,
+`--kettle-green`, `--kettle-red`, `--kettle-yellow`, `--kettle-peach`, `--kettle-teal`, `--kettle-radius`.
 
 ## Helpers and blueprints (card only – the integration does all of this)
 
-Copy [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) to `/config/packages/`
+Copy [`packages/smart_kettle.yaml`](packages/smart_kettle.yaml) to `/config/packages/`
 (`homeassistant: packages: !include_dir_named packages` in `configuration.yaml`) and restart. The card finds the
 helpers by their ids. Import the blueprints (Settings → Automations → Blueprints → *Import*, paste the file's GitHub
 URL) and create an automation from each one you want:
 
 | Blueprint | What it does | Uses |
 |---|---|---|
-| [`setti_kettle_boil_counter.yaml`](blueprints/automation/jotuera/setti_kettle_boil_counter.yaml) | counts a boil when the water stays above 90 °C for 20 s (at most once per 10 min); *boils today* resets at midnight | the three counters |
-| [`setti_kettle_ready.yaml`](blueprints/automation/jotuera/setti_kettle_ready.yaml) | when the water is ready runs your actions (notification, TTS, light); for a drink with a steeping time waits and runs your *steeped* actions (`{{ drink_name }}`, `{{ steep }}`); for baby formula sets 45 °C and keep warm | `input_text.kettle_drink` |
-| [`setti_kettle_ready_at.yaml`](blueprints/automation/jotuera/setti_kettle_ready_at.yaml) | *ready at 6:30* – switches the kettle on early enough (from the water temperature and the heating rate), once a day | `input_datetime.kettle_ready_at`, `input_boolean.kettle_ready_at` |
+| [`smart_kettle_boil_counter.yaml`](blueprints/automation/jotuera/smart_kettle_boil_counter.yaml) | counts a boil when the water stays above 90 °C for 20 s (at most once per 10 min); *boils today* resets at midnight | the three counters |
+| [`smart_kettle_ready.yaml`](blueprints/automation/jotuera/smart_kettle_ready.yaml) | when the water is ready runs your actions (notification, TTS, light); for a drink with a steeping time waits and runs your *steeped* actions (`{{ drink_name }}`, `{{ steep }}`); for baby formula sets 45 °C and keep warm | `input_text.kettle_drink` |
+| [`smart_kettle_ready_at.yaml`](blueprints/automation/jotuera/smart_kettle_ready_at.yaml) | *ready at 6:30* – switches the kettle on early enough (from the water temperature and the heating rate), once a day | `input_datetime.kettle_ready_at`, `input_boolean.kettle_ready_at` |
 
 After cleaning or descaling **hold** the counter on the card to reset it. Your own counters work too – set them under
 `counters:`.
@@ -194,7 +194,7 @@ Kettles with tea *modes* instead of a temperature (Svensson, ProfiCook / Koenic,
   the ETA while heating comes from the live rate, and so does the amount of water (± 20 %: the efficiency and the
   kettle's own mass are estimated).
 - **Steeping and the formula's second step in the card** need the card open in a browser; the blueprint
-  `setti_kettle_ready.yaml` does them in Home Assistant itself.
+  `smart_kettle_ready.yaml` does them in Home Assistant itself.
 - **Energy** is estimated from the heating time and the power (no plug meter needed); with `energy_entity` the real
   reading of the plug is used.
 

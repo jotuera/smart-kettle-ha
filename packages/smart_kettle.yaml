@@ -1,0 +1,40 @@
+# smart-kettle-card – helpers (optional)
+# Copy to /config/packages/smart_kettle.yaml; configuration.yaml needs:
+#   homeassistant:
+#     packages: !include_dir_named packages
+# The card finds these helpers by their ids – no card configuration needed.
+#  - counters: boils today / since cleaning / since descaling (blueprint smart_kettle_boil_counter.yaml)
+#  - kettle_drink: the drink chosen on the card, for the blueprint smart_kettle_ready.yaml
+#    (steeping notification, formula: boil, then hold 45 °C – also when no browser is open)
+#  - kettle_ready_at: "ready at 6:30" (blueprint smart_kettle_ready_at.yaml)
+counter:
+  kettle_boils_today:
+    name: Kettle boils today
+    icon: mdi:kettle
+    step: 1
+  kettle_boils_since_cleaning:
+    name: Kettle boils since cleaning
+    icon: mdi:spray-bottle
+    step: 1
+  kettle_boils_since_descaling:
+    name: Kettle boils since descaling
+    icon: mdi:kettle-alert
+    step: 1
+
+input_text:
+  kettle_drink:
+    name: Kettle drink
+    icon: mdi:cup
+    max: 255
+
+input_datetime:
+  kettle_ready_at:
+    name: Kettle ready at
+    icon: mdi:alarm
+    has_date: false
+    has_time: true
+
+input_boolean:
+  kettle_ready_at:
+    name: Kettle ready at – on
+    icon: mdi:alarm-check
