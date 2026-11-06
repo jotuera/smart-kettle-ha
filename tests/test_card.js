@@ -17,6 +17,7 @@ const sandbox = {
   customElements: { define: (n, c) => { defined[n] = c; } },
   localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } },
   document: { createElement: () => ({}) },
+  navigator: {},
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
@@ -27,7 +28,7 @@ assert(defined["setti-kettle-card-editor"], "editor defined");
 
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
 function makeHass({ lang = "en", unit = "°C", cur = 21, tgt = 100, on = false, changed = 30, keep = false, status = "standby",
-                    keepTime = 0, tuyaLocal = false, counters = true, startTemp = null } = {}) {
+                    keepTime = 0, tuyaLocal = false, counters = true, startTemp = null, helpers = false, history = null, mode = null } = {}) {
   const states = {}, entities = {}, calls = [];
   const add = (id, state, attributes = {}, tk = null, device = "kettle1", lc = 60) => {
     states[id] = { entity_id: id, state: String(state), attributes, last_changed: ago(lc) };
@@ -55,10 +56,16 @@ function makeHass({ lang = "en", unit = "°C", cur = 21, tgt = 100, on = false, 
     add("counter.kettle_boils_since_descaling", 12, {}, null, null);
   }
   if (startTemp !== null) add("input_number.kettle_start", startTemp, {}, null, null);
+  if (helpers) {
+    add("input_text.kettle_drink", "", {}, null, null);
+    add("input_datetime.kettle_ready_at", "06:30:00", { hour: 6, minute: 30, has_date: false, has_time: true }, null, null);
+    add("input_boolean.kettle_ready_at", "on", {}, null, null);
+  }
+  if (mode) add("select.czajnik_work_mode", mode[0], { options: mode }, "kettle_work_mode");
   return {
     states, entities, calls, language: lang, locale: { language: lang }, config: { unit_system: { temperature: unit } },
     callService: (d, s, data) => { calls.push([d, s, data]); return Promise.resolve(); },
-    callWS: () => Promise.resolve({}),
+    callWS: (msg) => Promise.resolve(history ? history(msg) : {}),
     formatEntityState: (s) => s.state,
   };
 }
@@ -182,4 +189,128 @@ ok("every language renders every state", () => {
   assert(/Gotowanie do 100 °C/.test(card({}, makeHass({ lang: "pl", on: true, changed: 1, cur: 50 }))._vm.name));
 });
 
-console.log(`\n${n} tests passed`);
+const clear = () => { for (const k of Object.keys(store)) delete store[k]; };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+(async () => {
+  ok("drinks tab: tap sets the temperature and keep warm, remembers the drink, writes the helper", () => {
+    clear();
+    const h = makeHass({ helpers: true, keep: true });
+    const c = card({ tab: "drinks", drinks: ["green_tea", "yerba", "formula"] }, h);
+    assert(/data-act="drink" data-v="green_tea"/.test(c.shadowRoot.innerHTML));
+    h.calls.length = 0;
+    click(c, "drink", "green_tea");
+    const calls = JSON.parse(JSON.stringify(h.calls));
+    assert.deepStrictEqual(calls[0], ["number", "set_value", { entity_id: "number.czajnik_temperatura", value: 80 }]);
+    assert.deepStrictEqual(calls[1], ["switch", "turn_off", { entity_id: "switch.czajnik_heat_preservation" }]);  // no keep warm for tea
+    assert.strictEqual(calls[2][0], "input_text");
+    assert.strictEqual(JSON.parse(calls[2][2].value).steep, 2.5);
+    h.calls.length = 0;
+    click(c, "drink", "yerba");
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls.slice(0, 3))), [
+      ["number", "set_value", { entity_id: "number.czajnik_temperatura", value: 75 }],
+      ["number", "set_value", { entity_id: "number.czajnik_heat_preservation_time", value: 30 }],
+      ["switch", "turn_on", { entity_id: "switch.czajnik_heat_preservation" }],
+    ]);
+  });
+
+  ok("drink temperature snapped to the range and step of the kettle, own drinks", () => {
+    clear();
+    const h = makeHass();
+    h.states["number.czajnik_temperatura"].attributes = { min: 40, max: 90, step: 5 };
+    const c = card({ drinks: ["honey", "coffee", { name: "Puer", temp: 97, steep: 3 }] }, h);
+    assert.deepStrictEqual(Array.from(c._vm.drinks.map((d) => d.t)), [40, 90, 90]);
+    assert.strictEqual(c._vm.drinks[2].name, "Puer");
+  });
+
+  ok("steeping countdown after the drink is ready", () => {
+    clear();
+    store["setti-kettle-card:drink:kettle1"] = JSON.stringify({ key: "green_tea", name: "Green tea", icon: "mdi:leaf", t: 80, steep: 2.5, at: Date.now() - 3 * 60000 });
+    const c = card({}, makeHass({ on: false, changed: 1, cur: 80, tgt: 80 }));
+    assert.strictEqual(c._vm.mode, "done");
+    assert.strictEqual(c._vm.steeping, true);
+    assert(/steeping – 1:[23]\d left/.test(c._vm.info), c._vm.info);
+    assert(/Green tea · 80 °C/.test(c._vm.name));
+    const c2 = card({}, makeHass({ on: false, changed: 3, cur: 79, tgt: 80 }));
+    assert(/take the tea out/.test(c2._vm.info), c2._vm.info);
+  });
+
+  ok("formula: after boiling the card sets 45 °C and keep warm (no helper)", () => {
+    clear();
+    store["setti-kettle-card:drink:kettle1"] = JSON.stringify({ key: "formula", name: "Baby formula", icon: "mdi:baby-bottle-outline", t: 100, then: 45, keep: 120, at: Date.now() - 5 * 60000 });
+    const h = makeHass({ on: false, changed: 0.5, cur: 99, tgt: 100 });
+    const c = card({}, h);
+    assert(/cooling down to 45 °C/.test(c._vm.info), c._vm.info);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls)), [
+      ["number", "set_value", { entity_id: "number.czajnik_temperatura", value: 45 }],
+      ["number", "set_value", { entity_id: "number.czajnik_heat_preservation_time", value: 120 }],
+      ["switch", "turn_on", { entity_id: "switch.czajnik_heat_preservation" }],
+    ]);
+    c.hass = h;  // only once per boil
+    assert.strictEqual(h.calls.length, 3);
+  });
+
+  ok("amount of water from the heating rate, low water warning", () => {
+    clear();
+    let c = card({ entities: { start_temp: "input_number.kettle_start" } }, makeHass({ on: true, changed: 1, cur: 61, startTemp: 21 }));
+    assert(/about 0.7 l/.test(c._vm.info), c._vm.info);  // 2200 W · 0.9 · 60 / (4186 · 40)
+    c = card({ entities: { start_temp: "input_number.kettle_start" } }, makeHass({ on: true, changed: 0.5, cur: 71, startTemp: 21 }));
+    assert(/little water/.test(c._vm.info), c._vm.info);
+    assert.strictEqual(c._vm.lowWater, true);
+  });
+
+  ok("ready at: shows the time and the estimated start, toggles the helper", () => {
+    clear();
+    const h = makeHass({ helpers: true, cur: 20 });
+    const c = card({}, h);
+    assert.strictEqual(c._vm.readyAt.on, true);
+    assert(/0?6:30/.test(c._vm.readyAt.time), c._vm.readyAt.time);
+    assert(/0?6:2[78]/.test(c._vm.readyAt.start), c._vm.readyAt.start);
+    click(c, "ready_toggle");
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls.pop())), ["input_boolean", "toggle", { entity_id: "input_boolean.kettle_ready_at" }]);
+  });
+
+  ok("modes tab from the work mode select; a drink picks the work mode", () => {
+    clear();
+    const h = makeHass({ mode: ["temp_setting", "temp_boiling", "boiling_quick", "setting_quick"] });
+    const c = card({ tab: "modes" }, h);
+    assert(/data-act="mode" data-v="temp_boiling"/.test(c.shadowRoot.innerHTML));
+    click(c, "drink", "formula");
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls[0])), ["select", "select_option", { entity_id: "select.czajnik_work_mode", option: "temp_boiling" }]);
+  });
+
+  ok("compact card and descaling interval from the water hardness", () => {
+    clear();
+    const c = card({ compact: true, water_hardness: "soft" }, makeHass());
+    assert(/class="cbtn boil"/.test(c.shadowRoot.innerHTML));
+    assert(!/data-act="target"/.test(c.shadowRoot.innerHTML));
+    assert.strictEqual(c._vm.counters.find((x) => x.key === "descaling").every, 120);
+  });
+
+  {
+    clear();
+    const day = new Date(); day.setHours(0, 0, 0, 0);
+    const s = (min) => (day.getTime() + min * 60000) / 1000;
+    const history = (msg) => msg.entity_ids[0] === "switch.czajnik_start" && !msg.end_time ? { "switch.czajnik_start": [
+      { s: "off", lu: s(0) }, { s: "on", lu: s(400) }, { s: "off", lu: s(402) }, { s: "on", lu: s(500) }, { s: "off", lu: s(501.5) }] } : {};
+    const c = card({ price: 1.1 }, makeHass({ history }));
+    await wait(20);
+    assert.strictEqual(c._today.count, 2);
+    assert(Math.abs(c._today.minutes - 3.5) < 0.01);
+    assert(/today 0.13 kWh/.test(c._vm.stats), c._vm.stats);   // 2.2 kW · 3.5 min
+    assert(/last /.test(c._vm.stats) && /1.5 min/.test(c._vm.stats), c._vm.stats);
+    n++; console.log("ok  energy today and the last boil from the recorder");
+  }
+
+  {
+    clear();
+    const h = makeHass();
+    const c = card({ drinks: ["black_tea"] }, h);
+    c._drink(c._vm, "black_tea", true);
+    await wait(450);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls.pop())), ["switch", "turn_on", { entity_id: "switch.czajnik_start" }]);
+    n++; console.log("ok  hold a drink = set and boil");
+  }
+
+  console.log(`\n${n} tests passed`);
+})().catch((e) => { console.error(e); process.exit(1); });

@@ -11,38 +11,82 @@
 
 **Karta Lovelace do czajników Wi-Fi Tuya / Smart Life – SETTI+ KT950W, Götze & Jensen KT975K i innych.** W Home
 Assistant inteligentny czajnik to przełącznik, liczba i czujnik temperatury. Ta karta robi z nich czajnik: ile
-zostało do zadanej temperatury i ile to potrwa, temperatury jednym dotknięciem, Gotuj / Stop, podtrzymywanie z
-czasem i liczniki gotowań, które przypominają o myciu i odkamienianiu. Jeden plik JavaScript, bez innych kart
-custom, bez szablonów YAML.
+zostało do celu i ile to potrwa, ile wody nalałeś, temperatury **i napoje** jednym dotknięciem (zielona herbata
+80 °C z odliczaniem parzenia, mleko modyfikowane zagotowane i trzymane w 45 °C…), Gotuj / Stop, podtrzymywanie,
+*gotowe na 6:30*, dzisiejsza energia i koszt oraz liczniki gotowań, które przypominają o myciu i odkamienianiu. Jeden
+plik JavaScript, bez innych kart custom, bez szablonów YAML.
 
 > Zbudowana na czajniku autora **Götze & Jensen KT975K** (integracja Tuya w HA), z karty button-card używanej od
 > września 2026. **SETTI+ KT950W** ma w HA te same encje. Inne czajniki: [docs/models.md](docs/models.md).
 >
-> **Status: beta (0.1.0).** Przetestowana na jednym czajniku; logika pokryta testami z atrapą HA.
+> **Status: beta (0.2.0).** Działa na czajniku autora; logika pokryta testami z atrapą HA. Napoje, parzenie,
+> „gotowe na” i blueprinty są nowe w 0.2.0.
 
-<img src="docs/img/cards-pl.png" width="700" alt="Karta czajnika: gotowy, gotowanie, zagotowane, podtrzymywanie">
+<img src="docs/img/cards-pl.png" width="700" alt="Karta czajnika: gotowy, gotowanie, zagotowane, podtrzymywanie, napoje, kompakt">
 
-<sub>Cztery stany górnego kafla: gotowy (czas dojścia do celu), gotowanie (postęp od temperatury startowej, czas z
-bieżącego tempa), zagotowane, podtrzymywanie. Liczniki robią się czerwone, gdy czas na mycie / odkamienianie.</sub>
+<sub>Gotowy (czas dojścia do celu), gotowanie (postęp od temperatury startowej, czas z bieżącego tempa, ilość wody),
+zagotowane, podtrzymywanie, zakładka Napoje z parzeniem zielonej herbaty i *gotowe na 6:30*, karta kompaktowa.
+Liczniki robią się czerwone, gdy czas na mycie / odkamienianie.</sub>
 
 ## Co robi
 
 | Część | Co dostajesz |
 |---|---|
-| **Górny kafel** | *Czajnik gotowy – do 100 °C ok. 2 min* → *Gotowanie do 100 °C – zostało ok. 55 s · 41 °C/min* z paskiem postępu → *Zagotowane · 100 °C – gotowe 30 s temu* (3 min) → *Podtrzymywanie · 80 °C*. Także *niedostępny* i *brak wody*. Dotknięcie = historia. |
-| **Temperatury** | Jedno dotknięcie ustawia temperaturę docelową; bieżąca świeci. Z profilu czajnika, przycięte do jego zakresu. |
+| **Górny kafel** | *Czajnik gotowy – do 100 °C ok. 2 min* → *Gotowanie do 100 °C – zostało ok. 55 s · 41 °C/min · ok. 0,7 l* z paskiem → *Zagotowane · 100 °C – gotowe 30 s temu* → *Podtrzymywanie · 80 °C*. Z napojem: *Zielona herbata · 80 °C – parzenie, jeszcze 1:25*. Także *niedostępny*, *brak wody* i *mało wody?*. Dotknięcie = historia. |
+| **Zakładka °C** | Dotknięcie ustawia temperaturę; bieżąca świeci. **Przytrzymanie = ustaw i gotuj.** Z profilu czajnika, przycięte do jego zakresu. |
+| **Zakładka Napoje** | 12 napojów z temperaturą, podtrzymaniem i czasem parzenia – dotknij, aby ustawić, **przytrzymaj, aby od razu gotować** (tabela niżej). Także własne napoje. |
+| **Zakładka Tryby** | Gdy czajnik ma wybór trybu (tryby herbat w tuya-local, *Work mode* w Tuya). |
 | **Gotuj / Stop** | Gotuj włącza czajnik (*Cel 100 °C · teraz 21 °C · czuwa*). Stop wyłącza grzanie **i** podtrzymywanie. |
 | **Podtrzymuj** | Przełącznik i czasy (30 min, 1 h, 2 h …), ograniczone do maksimum czajnika. |
-| **Liczniki** | Gotowania dziś, od mycia (co 20), od odkamieniania (co 60) – **przytrzymaj**, aby wyzerować. Opcjonalne. |
+| **Gotowe na** | *Gotowe na 06:30 – start ok. 06:28* – wł. / wył. i godzina (z blueprintem). |
+| **Liczniki** | Gotowania dziś, od mycia (co 20), od odkamieniania (co 60 albo wg twardości wody) – **przytrzymaj**, aby wyzerować. |
+| **Linia energii** | *dziś 0,13 kWh · 0,14 zł · ostatnio 08:01 (1,5 min)* – z historii, szacowana z mocy albo z licznika gniazdka. |
 
 - **Sama znajduje czajnik** – encje integracji Tuya po kluczach tłumaczeń, więc nie ma znaczenia, jak się nazywają
   ani w jakim języku jest HA (`_temperatura`, `_temperature`, `_temperatur` …). Czajniki z tuya-local po ich
   `water_heater`. Każdą encję można wskazać ręcznie (LocalTuya).
 - **Postęp bez pomocników** – temperatura wody w chwili naciśnięcia Gotuj jest odczytywana z historii (recorder).
-- **Uczy się Twojego czajnika** – po każdym gotowaniu karta zapamiętuje w przeglądarce zmierzone tempo grzania
-  (°C/min) i używa go do szacowania czasu przed startem.
+- **Uczy się Twojego czajnika** – po każdym gotowaniu zapamiętuje w przeglądarce tempo grzania (°C/min) i używa go do
+  szacowania czasu przed startem.
+- **Ile wody** – z tempa grzania i mocy czajnika: *m = P · η / (c · ΔT/Δt)*. Widać w trakcie grzania, a gdy czajnik
+  grzeje podejrzanie szybko – ostrzeżenie *mało wody?*.
+- **Karta kompaktowa** (`compact: true`) – jeden wiersz z postępem i przyciskiem Gotuj / Stop, np. do przeglądu domu.
 - **Czajniki °F**, **9 języków** (English, Polski, Deutsch, Čeština, Slovenčina, Français, Italiano, Español,
   Nederlands – język Twojego profilu HA), edytor wizualny, kolory motywu do nadpisania.
+
+## Napoje
+
+| Napój | Temperatura | Podtrzymanie | Parzenie |
+|---|---|---|---|
+| `green_tea` Zielona herbata | 80 °C | – | 2,5 min |
+| `white_tea` Biała herbata | 75 °C | – | 4 min |
+| `matcha` Matcha | 75 °C | – | – |
+| `oolong` Oolong | 90 °C | – | 4 min |
+| `coffee` Kawa (drip, french press) | 95 °C | – | 4 min |
+| `yerba` Yerba mate | 75 °C | 30 min | – |
+| `black_tea` Czarna herbata | 100 °C | – | 4 min |
+| `herbal` Zioła | 100 °C | – | 5 min |
+| `formula` Mleko modyfikowane | 100 °C → **45 °C** | 120 min | – |
+| `honey` Woda z miodem | 40 °C | 60 min | – |
+| `oatmeal` Owsianka / zupka | 100 °C | – | – |
+| `drink_water` Ciepła woda | 55 °C | 60 min | – |
+
+Domyślne kafle: zielona herbata, kawa, czarna herbata, yerba mate, mleko modyfikowane, ciepła woda – inne wybierzesz w
+edytorze. Temperatura, której czajnik nie ustawi, jest zamieniana na najbliższą możliwą (kawa 95 °C → 90 °C przy
+czajniku ze skokiem 5). **Mleko modyfikowane** jest najpierw zagotowywane (zalecenie WHO dla mleka w proszku), potem
+studzone do 45 °C i podtrzymywane: drugi krok robi karta, gdy jest otwarta; z pomocnikiem i blueprintem niżej dzieje się
+bez przeglądarki.
+
+Własne napoje:
+
+```yaml
+drinks:
+  - green_tea
+  - coffee
+  - { name: Pu-erh, icon: mdi:tea, temp: 95, steep: 3 }
+  - { name: Podgrzanie butelki, icon: mdi:baby-bottle, temp: 40, keep: 60 }
+  - { name: Herbatka dla mamy, temp: 100, then: 70, keep: 30 }   # zagotuj, potem trzymaj 70 °C
+```
 
 ## Instalacja
 
@@ -50,7 +94,7 @@ bieżącego tempa), zagotowane, podtrzymywanie. Liczniki robią się czerwone, g
 typ *Dashboard* → zainstaluj *SETTI+ Kettle Card* → odśwież przeglądarkę.
 
 **Ręcznie:** skopiuj `dist/setti-kettle-card.js` do `/config/www/`, potem Ustawienia → Dashboardy → ⋮ → *Zasoby* →
-dodaj `/local/setti-kettle-card.js` jako *Moduł JavaScript*.
+dodaj `/local/setti-kettle-card.js?v=0.2.0` jako *Moduł JavaScript* (po aktualizacji zmień `v=`).
 
 Dodaj kartę – *SETTI+ Kettle Card* w wyborze kart, albo:
 
@@ -65,9 +109,12 @@ To wszystko dla czajnika w integracji Tuya: pierwszy czajnik zostanie znaleziony
 ```yaml
 type: custom:setti-kettle-card
 title: Czajnik                       # "" ukrywa nagłówek
-profile: setti_kt950w                # zob. docs/models.md – temperatury i czasy podtrzymania Twojego czajnika
+profile: setti_kt950w                # zob. docs/models.md – temperatury, czasy podtrzymania i moc Twojego czajnika
 presets: [40, 55, 70, 85, 100]       # opcjonalnie – zastępuje profil
 keep_warm_times: [30, 60, 120]       # opcjonalnie – minuty
+drinks: [green_tea, coffee, black_tea, yerba, formula, drink_water]
+tab: drinks                          # pierwsza zakładka: temps | drinks | modes (ostatnio używana jest zapamiętywana)
+compact: false
 device: 0123456789abcdef0123456789abcdef   # opcjonalnie – gdy masz więcej niż jeden czajnik
 entities:                            # opcjonalnie – tylko to, czego nie znalazła
   start: switch.czajnik_start
@@ -76,32 +123,40 @@ entities:                            # opcjonalnie – tylko to, czego nie znala
   status: sensor.czajnik_status
   keep_warm: switch.czajnik_heat_preservation
   keep_warm_time: number.czajnik_heat_preservation_time
+  # mode: select.czajnik_work_mode       # tryby herbat / tryb pracy
   # water_heater: water_heater.czajnik   # tuya-local zamiast start / target / current
+  # drink / ready_at / ready_at_on       # pomocniki – domyślnie te z packages/setti_kettle.yaml
 counters:                            # opcjonalnie – domyślnie pomocniki z packages/setti_kettle.yaml
   today: counter.kettle_boils_today
   cleaning: counter.kettle_boils_since_cleaning
   descaling: counter.kettle_boils_since_descaling
 cleaning_every: 20
-descaling_every: 60
+descaling_every: 60                  # albo water_hardness: soft (120) | medium (60) | hard (30)
+power: 2200                          # W – ilość wody i energia (domyślnie z profilu)
+price: 1.10                          # za kWh, w walucie HA – albo price_entity: sensor.cena_pradu
+energy_entity: sensor.gniazdko_czajnika_energia   # opcjonalnie licznik kWh gniazdka zamiast szacunku
 rate: 40                             # opcjonalnie °C/min – stałe zamiast wyuczonego
-show: { header: true, presets: true, controls: true, keep_warm: true, counters: true }
+show: { header: true, presets: true, controls: true, keep_warm: true, ready_at: true, counters: true, stats: true }
 ```
 
 Kolory idą za motywem; nadpiszesz je card-modem albo w motywie: `--setti-blue`, `--setti-purple`, `--setti-green`,
-`--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-radius`.
+`--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-teal`, `--setti-radius`.
 
-## Liczniki gotowań (opcjonalnie)
+## Pomocniki i blueprinty (opcjonalnie)
 
-1. Skopiuj [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) do `/config/packages/` (trzy pomocniki
-   `counter`; w `configuration.yaml` `homeassistant: packages: !include_dir_named packages`) i zrestartuj HA.
-2. Zaimportuj blueprint
-   [`setti_kettle_boil_counter.yaml`](blueprints/automation/jotuera/setti_kettle_boil_counter.yaml)
-   (Ustawienia → Automatyzacje → Blueprinty → *Importuj*, wklej adres pliku na GitHubie) i utwórz z niego automatyzację
-   z *Current temperature* swojego czajnika. Gotowanie liczy się, gdy woda trzyma powyżej 90 °C przez 20 s, najwyżej
-   raz na 10 minut; *gotowania dziś* zerują się o północy.
-3. Karta sama pokaże liczniki. Po myciu lub odkamienianiu **przytrzymaj** licznik, aby go wyzerować.
+Skopiuj [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) do `/config/packages/` (w `configuration.yaml`
+`homeassistant: packages: !include_dir_named packages`) i zrestartuj HA. Karta sama znajdzie pomocniki po ich id.
+Zaimportuj blueprinty (Ustawienia → Automatyzacje → Blueprinty → *Importuj*, wklej adres pliku na GitHubie) i utwórz
+automatyzację z każdego, którego chcesz:
 
-Własne liczniki też działają – wskaż je w `counters:`.
+| Blueprint | Co robi | Używa |
+|---|---|---|
+| [`setti_kettle_boil_counter.yaml`](blueprints/automation/jotuera/setti_kettle_boil_counter.yaml) | liczy gotowanie, gdy woda trzyma powyżej 90 °C przez 20 s (najwyżej raz na 10 min); *gotowania dziś* zerują się o północy | trzy liczniki |
+| [`setti_kettle_ready.yaml`](blueprints/automation/jotuera/setti_kettle_ready.yaml) | gdy woda gotowa – Twoje akcje (powiadomienie, TTS, światło); dla napoju z parzeniem czeka i uruchamia akcje *po parzeniu* (`{{ drink_name }}`, `{{ steep }}`); dla mleka ustawia 45 °C i podtrzymanie | `input_text.kettle_drink` |
+| [`setti_kettle_ready_at.yaml`](blueprints/automation/jotuera/setti_kettle_ready_at.yaml) | *gotowe na 6:30* – włącza czajnik odpowiednio wcześniej (z temperatury wody i tempa grzania), raz dziennie | `input_datetime.kettle_ready_at`, `input_boolean.kettle_ready_at` |
+
+Po myciu lub odkamienianiu **przytrzymaj** licznik na karcie, aby go wyzerować. Własne liczniki też działają – wskaż je
+w `counters:`.
 
 ## Czajniki
 
@@ -112,8 +167,7 @@ Własne liczniki też działają – wskaż je w `counters:`.
 | AENO EK7S, Fiesta DK1G, SilverCrest (Lidl Home), Webber WK115, Nedis SmartLife, Weekett, Korex, Blow, Goldair… | Tuya, tuya-local | własne profile / `auto` | nieprzetestowane |
 
 Pełna lista z temperaturami, zakresami podtrzymania, encjami i wartościami statusu: **[docs/models.md](docs/models.md)**.
-Czajniki z *trybami* herbat zamiast temperatury (Svensson, ProfiCook / Koenic, AENO EK1S) działają dla gotowania /
-stopu i podtrzymania; wiersz trybów jest w planach.
+Czajniki z *trybami* herbat zamiast temperatury (Svensson, ProfiCook / Koenic, AENO EK1S) dostają zakładkę *Tryby*.
 
 ## Dobrze wiedzieć
 
@@ -121,9 +175,13 @@ stopu i podtrzymania; wiersz trybów jest w planach.
   Jeśli temperatura odświeża się co minutę, spróbuj tuya-local (lokalnie, bez chmury).
 - **Włączony z HA czajnik czasem pika dwa razy i się wyłącza** (zgłaszane dla KT950W) – to zabezpieczenie samego
   czajnika (zdjęty z podstawy, brak wody); naciśnij Gotuj jeszcze raz.
-- **Czas przed startem** liczony jest z wyuczonego tempa (albo 40 °C/min z profilu ≈ pełny czajnik 1,7 L / 2200 W).
-  Pół czajnika grzeje się mniej więcej dwa razy szybciej – w trakcie grzania czas liczony jest z bieżącego tempa.
-- **„Zagotowane”** widać przez 3 minuty od samoczynnego wyłączenia czajnika po osiągnięciu celu.
+- **Czas przed startem** liczony jest z wyuczonego tempa (albo 40 °C/min z profilu). Pół czajnika grzeje się mniej
+  więcej dwa razy szybciej – w trakcie grzania czas i ilość wody liczone są z bieżącego tempa (± 20 %: sprawność
+  i masa samego czajnika są szacowane).
+- **Parzenie i drugi krok mleka w karcie** wymagają otwartej karty w przeglądarce; blueprint `setti_kettle_ready.yaml`
+  robi to w samym Home Assistant.
+- **Energia** jest szacowana z czasu grzania i mocy (licznik gniazdka niepotrzebny); z `energy_entity` brany jest
+  prawdziwy odczyt gniazdka.
 
 ## Rozwój
 

@@ -1,0 +1,105 @@
+blueprint:
+  name: Kettle – ready at a time (setti-kettle-card)
+  description: >-
+    Water ready at 6:30: switches the kettle on early enough to reach the temperature at the time of the helper
+    input_datetime.kettle_ready_at, while input_boolean.kettle_ready_at is on (packages/setti_kettle.yaml).
+    The start is computed from the current water temperature and the heating rate. Once a day.
+    setti-kettle-card shows the time, the estimated start and the on / off switch.
+    https://github.com/jotuera/setti-kettle-card
+  domain: automation
+  source_url: https://github.com/jotuera/setti-kettle-card/blob/main/blueprints/automation/jotuera/setti_kettle_ready_at.yaml
+  input:
+    start:
+      name: Kettle Start switch
+      selector:
+        entity:
+          domain: switch
+    temperature_sensor:
+      name: Kettle current temperature
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    target:
+      name: Kettle target temperature
+      selector:
+        entity:
+          domain: number
+    ready_at:
+      name: Ready at (time helper)
+      default: input_datetime.kettle_ready_at
+      selector:
+        entity:
+          domain: input_datetime
+    enabled:
+      name: On / off helper
+      default: input_boolean.kettle_ready_at
+      selector:
+        entity:
+          domain: input_boolean
+    temperature:
+      name: Temperature
+      default: 100
+      selector:
+        number:
+          min: 40
+          max: 212
+          unit_of_measurement: "°"
+    rate:
+      name: Heating rate
+      description: About 40 °C/min for a full 1.7 L / 2200 W kettle – a little low is safer (earlier start)
+      default: 35
+      selector:
+        number:
+          min: 5
+          max: 150
+          unit_of_measurement: "°/min"
+    margin:
+      name: Margin
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 15
+          unit_of_measurement: min
+
+mode: single
+max_exceeded: silent
+
+variables:
+  sensor: !input temperature_sensor
+  ready_entity: !input ready_at
+  temp: !input temperature
+  rate: !input rate
+  margin: !input margin
+  ready: "{{ today_at(states(ready_entity)) if states(ready_entity) not in ['unknown', 'unavailable'] else none }}"
+  needed: "{{ ((temp - states(sensor) | float(20)) / rate) | round(1) + margin }}"
+  left: "{{ ((ready - now()).total_seconds() / 60) if ready else 9999 }}"
+
+triggers:
+  - trigger: time_pattern
+    minutes: "/1"
+
+conditions:
+  - condition: state
+    entity_id: !input enabled
+    state: "on"
+  - condition: state
+    entity_id: !input start
+    state: "off"
+  - condition: template
+    value_template: >-
+      {{ left <= needed and left > -2
+         and (this.attributes.last_triggered is none or this.attributes.last_triggered.date() != now().date()) }}
+
+actions:
+  - action: number.set_value
+    target:
+      entity_id: !input target
+    data:
+      value: "{{ temp }}"
+  - delay:
+      seconds: 1
+  - action: switch.turn_on
+    target:
+      entity_id: !input start

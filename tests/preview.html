@@ -42,11 +42,12 @@
   function hass(o) {
     o = Object.assign({ cur: 21, tgt: 100, on: false, changed: 30, keep: false, status: "standby", keepTime: 0, today: 0, clean: 13, descale: 13 }, o);
     const states = {}, entities = {};
-    const add = (id, state, attributes, tk, dev = "k", lc = 60) => {
+    const D = o.dev || "k";
+    const add = (id, state, attributes, tk, dev = D, lc = 60) => {
       states[id] = { entity_id: id, state: String(state), attributes: attributes || {}, last_changed: ago(lc) };
       entities[id] = { entity_id: id, device_id: dev, translation_key: tk, platform: "tuya" };
     };
-    add("switch.kettle_start", o.on ? "on" : "off", {}, "start", "k", o.changed);
+    add("switch.kettle_start", o.on ? "on" : "off", {}, "start", D, o.changed);
     add("number.kettle_temperature", o.tgt, { min: 0, max: 100, step: 1, unit_of_measurement: "°C" }, "temperature");
     add("sensor.kettle_current_temperature", o.cur, { unit_of_measurement: "°C" }, "current_temperature");
     add("sensor.kettle_status", o.status, {}, "status");
@@ -56,18 +57,33 @@
     add("counter.kettle_boils_since_cleaning", o.clean, {}, null, null);
     add("counter.kettle_boils_since_descaling", o.descale, {}, null, null);
     if (o.t0 != null) add("input_number.t0", o.t0, {}, null, null);
-    return { states, entities, language: lang, locale: { language: lang }, config: { unit_system: { temperature: "°C" } },
-             callService: (d, s, data) => console.log("callService", d, s, JSON.stringify(data)), callWS: () => Promise.resolve({}),
-             formatEntityState: (s) => s.state };
+    if (o.readyAt) {
+      add("input_datetime.kettle_ready_at", "06:30:00", { hour: 6, minute: 30, has_time: true }, null, null);
+      add("input_boolean.kettle_ready_at", "on", {}, null, null);
+    }
+    // today: two boils (2 min, 1.5 min) – for the energy line
+    const day = new Date(); day.setHours(0, 0, 0, 0);
+    const s = (min) => (day.getTime() + min * 60000) / 1000;
+    const hist = { "switch.kettle_start": [{ s: "off", lu: s(0) }, { s: "on", lu: s(420) }, { s: "off", lu: s(422) }, { s: "on", lu: s(480) }, { s: "off", lu: s(481.5) }] };
+    return { states, entities, language: lang, locale: { language: lang }, config: { unit_system: { temperature: "°C" }, currency: "PLN" },
+             callService: (d, s, data) => console.log("callService", d, s, JSON.stringify(data)),
+             callWS: (m) => Promise.resolve(m.end_time ? {} : hist), formatEntityState: (s) => s.state };
   }
+  const drink = (key, name, icon, t, steep, agoMin) => localStorage.setItem("setti-kettle-card:drink:d5", JSON.stringify({ key, name, icon, t, steep, at: Date.now() - agoMin * 60000 }));
+  localStorage.removeItem("setti-kettle-card:drink:k");
+  localStorage.removeItem("setti-kettle-card:tab:k");
   const scenes = [
     ["idle", {}, {}],
-    ["heating", { on: true, changed: 1, cur: 62, status: "heating", t0: 21, today: 2 }, { entities: { start_temp: "input_number.t0" } }],
+    ["heating – about 0.7 l of water", { on: true, changed: 1, cur: 62, status: "heating", t0: 21, today: 2 }, { entities: { start_temp: "input_number.t0" } }],
     ["boiled", { on: false, changed: 0.5, cur: 99, today: 3, clean: 21 }, {}],
     ["keep warm 80 °C", { tgt: 80, cur: 79, keep: true, status: "warm", keepTime: 60, today: 3, clean: 21, descale: 61 }, { profile: "gotze_jensen_kt975k" }],
+    ["drinks tab · steeping green tea · ready at 6:30 · energy", { tgt: 80, cur: 80, changed: 1, today: 3, readyAt: true, dev: "d5" }, { tab: "drinks", price: 1.1, _drink: 1 }],
+    ["compact", { on: true, changed: 0.8, cur: 55, status: "heating", t0: 20 }, { compact: true, entities: { start_temp: "input_number.t0" } }],
   ];
   const grid = document.getElementById("grid");
   for (const [name, o, cfg] of scenes) {
+    if (cfg._drink) drink("green_tea", lang === "pl" ? "Zielona herbata" : "Green tea", "mdi:leaf", 80, 2.5, 2);
+
     const box = document.createElement("div");
     box.innerHTML = `<h4>${name}</h4>`;
     const c = document.createElement("setti-kettle-card");

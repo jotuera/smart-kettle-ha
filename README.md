@@ -11,28 +11,36 @@
 
 **A Lovelace card for Tuya / Smart Life Wi-Fi kettles – SETTI+ KT950W, Götze & Jensen KT975K and others.** In Home
 Assistant a smart kettle is a switch, a number and a temperature sensor. This card turns them into a kettle: how far it
-is to the target and how long it will take, one-tap temperatures, Boil / Stop, keep warm with its time, and boil
-counters that tell you when to clean and descale. One JavaScript file, no other custom cards, no YAML templates.
+is to the target and how long it will take, how much water you poured in, one-tap temperatures **and drinks** (green
+tea 80 °C with a steeping countdown, baby formula boiled and held at 45 °C…), Boil / Stop, keep warm, *ready at 6:30*,
+today's energy and cost, and boil counters that tell you when to clean and descale. One JavaScript file, no other
+custom cards, no YAML templates.
 
 > Built on the author's **Götze & Jensen KT975K** (Tuya core integration), from a button-card dashboard used since
 > September 2026. The **SETTI+ KT950W** has the same entities in HA. Other kettles: [docs/models.md](docs/models.md).
 >
-> **Status: beta (0.1.0).** Tested on one kettle; logic covered by tests with a mocked HA.
+> **Status: beta (0.2.0).** Runs on the author's kettle; the logic is covered by tests with a mocked HA. Drinks,
+> steeping, ready-at and the blueprints are new in 0.2.0.
 
-<img src="docs/img/cards-en.png" width="700" alt="Kettle card: ready, boiling, boiled, keeping warm">
+<img src="docs/img/cards-en.png" width="700" alt="Kettle card: ready, boiling, boiled, keeping warm, drinks, compact">
 
-<sub>The four states of the top tile: ready (ETA to the target), boiling (progress from the start temperature, ETA from
-the live rate), boiled, keeping warm. Counters turn red when cleaning / descaling is due.</sub>
+<sub>Ready (ETA to the target), boiling (progress from the start temperature, ETA from the live rate, amount of water),
+boiled, keeping warm, the Drinks tab with a green tea steeping and *ready at 6:30*, the compact card. Counters turn
+red when cleaning / descaling is due.</sub>
 
 ## What it does
 
 | Part | What you get |
 |---|---|
-| **Top tile** | *Kettle ready – to 100 °C in about 2 min* → *Boiling to 100 °C – about 55 s left · 41 °C/min* with a progress bar → *Boiled · 100 °C – ready 30 s ago* (3 min) → *Keeping warm · 80 °C*. Also *unavailable* and *no water*. Tap = history. |
-| **Presets** | One tap sets the target temperature; the current one glows. From the kettle's profile, clamped to its range. |
+| **Top tile** | *Kettle ready – to 100 °C in about 2 min* → *Boiling to 100 °C – about 55 s left · 41 °C/min · about 0.7 l* with a progress bar → *Boiled · 100 °C – ready 30 s ago* → *Keeping warm · 80 °C*. With a drink: *Green tea · 80 °C – steeping, 1:25 left*. Also *unavailable*, *no water* and *little water?*. Tap = history. |
+| **°C tab** | One tap sets the target temperature; the current one glows. **Hold = set and boil.** From the kettle's profile, clamped to its range. |
+| **Drinks tab** | 12 drinks with their temperature, keep warm and steeping time – tap to set, **hold to set and boil** (table below). Your own drinks too. |
+| **Modes tab** | When the kettle has a mode select (tea modes in tuya-local, *Work mode* in core Tuya). |
 | **Boil / Stop** | Boil starts the kettle (*Target 100 °C · now 21 °C · standby*). Stop switches off heating **and** keep warm. |
 | **Keep warm** | Switch and time chips (30 min, 1 h, 2 h …), limited to the kettle's maximum. |
-| **Counters** | Boils today, since cleaning (every 20), since descaling (every 60) – **hold** to reset. Optional. |
+| **Ready at** | *Ready at 06:30 – start at about 06:28* – on / off and the time (with the blueprint). |
+| **Counters** | Boils today, since cleaning (every 20), since descaling (every 60, or by your water hardness) – **hold** to reset. |
+| **Energy line** | *today 0.13 kWh · 0.14 zł · last 08:01 (1.5 min)* – from the recorder, estimated from the power or read from a plug meter. |
 
 - **Finds the kettle by itself** – core Tuya entities by their translation keys, so it does not matter what the
   entities are called or which language HA uses (`_temperatura`, `_temperature`, `_temperatur` …). tuya-local
@@ -40,8 +48,44 @@ the live rate), boiled, keeping warm. Counters turn red when cleaning / descalin
 - **Progress without helpers** – the water temperature at the moment you pressed Boil is read from the recorder.
 - **Learns your kettle** – after each boil the card stores the measured heating rate (°C/min) in the browser and
   uses it for the ETA before heating starts.
+- **How much water** – from the heating rate and the kettle's power: *m = P · η / (c · ΔT/Δt)*. Shown while heating
+  and as a *little water?* warning when the kettle heats suspiciously fast.
+- **Compact card** (`compact: true`) – one row with the progress and a Boil / Stop button, e.g. for an overview.
 - **°F kettles**, **9 languages** (English, Polski, Deutsch, Čeština, Slovenčina, Français, Italiano, Español,
   Nederlands – the language of your HA profile), visual editor, theme colours you can override.
+
+## Drinks
+
+| Drink | Temperature | Keep warm | Steeping |
+|---|---|---|---|
+| `green_tea` Green tea | 80 °C | – | 2.5 min |
+| `white_tea` White tea | 75 °C | – | 4 min |
+| `matcha` Matcha | 75 °C | – | – |
+| `oolong` Oolong | 90 °C | – | 4 min |
+| `coffee` Coffee (drip, French press) | 95 °C | – | 4 min |
+| `yerba` Yerba mate | 75 °C | 30 min | – |
+| `black_tea` Black tea | 100 °C | – | 4 min |
+| `herbal` Herbal tea | 100 °C | – | 5 min |
+| `formula` Baby formula | 100 °C → **45 °C** | 120 min | – |
+| `honey` Honey water | 40 °C | 60 min | – |
+| `oatmeal` Porridge / noodles | 100 °C | – | – |
+| `drink_water` Warm water | 55 °C | 60 min | – |
+
+Default tiles: green tea, coffee, black tea, yerba mate, baby formula, warm water – pick others in the editor. A
+temperature the kettle cannot set is moved to the nearest one it can (coffee 95 °C → 90 °C on a 5-step kettle).
+**Baby formula** is boiled first (WHO advice for powdered formula) and then cooled down to 45 °C and kept warm: the
+card does the second step when it is open; with the helper and the blueprint below it happens without a browser.
+
+Own drinks:
+
+```yaml
+drinks:
+  - green_tea
+  - coffee
+  - { name: Pu-erh, icon: mdi:tea, temp: 95, steep: 3 }
+  - { name: Bottle warm-up, icon: mdi:baby-bottle, temp: 40, keep: 60 }
+  - { name: Mother's tea, temp: 100, then: 70, keep: 30 }   # boil, then hold 70 °C
+```
 
 ## Installation
 
@@ -49,7 +93,7 @@ the live rate), boiled, keeping warm. Counters turn red when cleaning / descalin
 type *Dashboard* → install *SETTI+ Kettle Card* → reload the browser.
 
 **Manual:** copy `dist/setti-kettle-card.js` to `/config/www/`, then Settings → Dashboards → ⋮ → *Resources* →
-add `/local/setti-kettle-card.js` as *JavaScript module*.
+add `/local/setti-kettle-card.js?v=0.2.0` as *JavaScript module* (change `v=` after an update).
 
 Add the card – *SETTI+ Kettle Card* in the card picker, or:
 
@@ -64,9 +108,12 @@ That is all for a kettle in the Tuya integration: the first kettle is found auto
 ```yaml
 type: custom:setti-kettle-card
 title: Kettle                        # "" hides the header
-profile: setti_kt950w                # see docs/models.md – presets and keep-warm times of your kettle
+profile: setti_kt950w                # see docs/models.md – presets, keep-warm times and power of your kettle
 presets: [40, 55, 70, 85, 100]       # optional – overrides the profile
 keep_warm_times: [30, 60, 120]       # optional – minutes
+drinks: [green_tea, coffee, black_tea, yerba, formula, drink_water]
+tab: drinks                          # first tab: temps | drinks | modes (the last one used is remembered)
+compact: false
 device: 0123456789abcdef0123456789abcdef   # optional – when you have more than one kettle
 entities:                            # optional – only what was not found
   start: switch.kettle_start
@@ -75,33 +122,40 @@ entities:                            # optional – only what was not found
   status: sensor.kettle_status
   keep_warm: switch.kettle_heat_preservation
   keep_warm_time: number.kettle_heat_preservation_time
+  # mode: select.kettle_work_mode        # tea modes / work mode
   # water_heater: water_heater.kettle    # tuya-local instead of start / target / current
-  # start_temp: input_number.kettle_start_temperature   # not needed – the recorder is used
+  # drink / ready_at / ready_at_on       # helpers – default: those of packages/setti_kettle.yaml
 counters:                            # optional – default: the helpers of packages/setti_kettle.yaml
   today: counter.kettle_boils_today
   cleaning: counter.kettle_boils_since_cleaning
   descaling: counter.kettle_boils_since_descaling
 cleaning_every: 20
-descaling_every: 60
+descaling_every: 60                  # or water_hardness: soft (120) | medium (60) | hard (30)
+power: 2200                          # W – amount of water and energy (default: the profile's)
+price: 1.10                          # per kWh, in the currency of HA – or price_entity: sensor.electricity_price
+energy_entity: sensor.kettle_plug_energy   # optional kWh meter of the kettle's plug instead of the estimate
 rate: 40                             # optional °C/min – fixed instead of learned
-show: { header: true, presets: true, controls: true, keep_warm: true, counters: true }
+show: { header: true, presets: true, controls: true, keep_warm: true, ready_at: true, counters: true, stats: true }
 ```
 
 Colours follow the theme; override them with card-mod or a theme: `--setti-blue`, `--setti-purple`,
-`--setti-green`, `--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-radius`.
+`--setti-green`, `--setti-red`, `--setti-yellow`, `--setti-peach`, `--setti-teal`, `--setti-radius`.
 
-## Boil counters (optional)
+## Helpers and blueprints (optional)
 
-1. Copy [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) to `/config/packages/` (three `counter`
-   helpers; `homeassistant: packages: !include_dir_named packages` in `configuration.yaml`) and restart.
-2. Import the blueprint
-   [`setti_kettle_boil_counter.yaml`](blueprints/automation/jotuera/setti_kettle_boil_counter.yaml)
-   (Settings → Automations → Blueprints → *Import*, paste the file's GitHub URL) and create an automation from it with
-   your kettle's *Current temperature*. A boil counts when the water stays above 90 °C for 20 s, at most once per
-   10 minutes; *boils today* resets at midnight.
-3. The card shows the counters by itself. After cleaning or descaling **hold** the counter to reset it.
+Copy [`packages/setti_kettle.yaml`](packages/setti_kettle.yaml) to `/config/packages/`
+(`homeassistant: packages: !include_dir_named packages` in `configuration.yaml`) and restart. The card finds the
+helpers by their ids. Import the blueprints (Settings → Automations → Blueprints → *Import*, paste the file's GitHub
+URL) and create an automation from each one you want:
 
-Your own counters work too – set them under `counters:`.
+| Blueprint | What it does | Uses |
+|---|---|---|
+| [`setti_kettle_boil_counter.yaml`](blueprints/automation/jotuera/setti_kettle_boil_counter.yaml) | counts a boil when the water stays above 90 °C for 20 s (at most once per 10 min); *boils today* resets at midnight | the three counters |
+| [`setti_kettle_ready.yaml`](blueprints/automation/jotuera/setti_kettle_ready.yaml) | when the water is ready runs your actions (notification, TTS, light); for a drink with a steeping time waits and runs your *steeped* actions (`{{ drink_name }}`, `{{ steep }}`); for baby formula sets 45 °C and keep warm | `input_text.kettle_drink` |
+| [`setti_kettle_ready_at.yaml`](blueprints/automation/jotuera/setti_kettle_ready_at.yaml) | *ready at 6:30* – switches the kettle on early enough (from the water temperature and the heating rate), once a day | `input_datetime.kettle_ready_at`, `input_boolean.kettle_ready_at` |
+
+After cleaning or descaling **hold** the counter on the card to reset it. Your own counters work too – set them under
+`counters:`.
 
 ## Kettles
 
@@ -112,8 +166,7 @@ Your own counters work too – set them under `counters:`.
 | AENO EK7S, Fiesta DK1G, SilverCrest (Lidl Home), Webber WK115, Nedis SmartLife, Weekett, Korex, Blow, Goldair… | Tuya, tuya-local | own profiles / `auto` | untested |
 
 The full list with temperatures, keep-warm ranges, the entities and the status values: **[docs/models.md](docs/models.md)**.
-Kettles with tea *modes* instead of a temperature (Svensson, ProfiCook / Koenic, AENO EK1S) work for boil / stop and
-keep warm; a mode row is on the roadmap.
+Kettles with tea *modes* instead of a temperature (Svensson, ProfiCook / Koenic, AENO EK1S) get the *Modes* tab.
 
 ## Good to know
 
@@ -121,9 +174,13 @@ keep warm; a mode row is on the roadmap.
   second or two. If the temperature only updates every minute, try tuya-local (local, no cloud).
 - **Started from HA, the kettle sometimes beeps twice and stops** (reported for the KT950W) – that is the kettle's
   own protection (lifted from the base, no water); press Boil again.
-- **ETA before heating** uses the learned rate (or the profile's 40 °C/min ≈ 1.7 L / 2200 W full kettle). Half a
-  kettle heats about twice as fast – the ETA while heating comes from the live rate.
-- **"Boiled"** shows for 3 minutes after the kettle switched itself off at the target.
+- **ETA before heating** uses the learned rate (or the profile's 40 °C/min). Half a kettle heats about twice as fast –
+  the ETA while heating comes from the live rate, and so does the amount of water (± 20 %: the efficiency and the
+  kettle's own mass are estimated).
+- **Steeping and the formula's second step in the card** need the card open in a browser; the blueprint
+  `setti_kettle_ready.yaml` does them in Home Assistant itself.
+- **Energy** is estimated from the heating time and the power (no plug meter needed); with `energy_entity` the real
+  reading of the plug is used.
 
 ## Development
 
