@@ -1,15 +1,15 @@
 {
   "domain": "setti_kettle",
   "name": "SETTI Kettle",
-  "version": "0.3.0",
-  "documentation": "https://github.com/jotuera/setti-kettle-card",
-  "issue_tracker": "https://github.com/jotuera/setti-kettle-card/issues",
+  "after_dependencies": ["recorder", "tuya"],
   "codeowners": ["@jotuera"],
   "config_flow": true,
-  "dependencies": ["http", "frontend"],
-  "after_dependencies": ["tuya", "recorder"],
+  "dependencies": ["frontend", "http"],
+  "documentation": "https://github.com/jotuera/setti-kettle-card",
   "integration_type": "helper",
   "iot_class": "calculated",
+  "issue_tracker": "https://github.com/jotuera/setti-kettle-card/issues",
+  "loggers": ["custom_components.setti_kettle"],
   "requirements": [],
-  "loggers": ["custom_components.setti_kettle"]
+  "version": "0.3.0"
 }
