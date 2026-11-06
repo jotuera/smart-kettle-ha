@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- Card preview without Home Assistant: python3 -m http.server 8781  ->  http://localhost:8781/tests/preview.html
+     ?lang=pl  &theme=light  – a mocked hass, every mode of the top tile side by side (used for the README screenshots). -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>setti-kettle-card preview</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+<style>
+  body { margin: 0; padding: 24px; font-family: Roboto, "Segoe UI", sans-serif; background: #1e1e2e; color: #cdd6f4;
+         --divider-color: rgba(205,214,244,.13); --secondary-text-color: #9399b2; }
+  body.light { background: #f5f5f5; color: #212121; --divider-color: rgba(0,0,0,.12); --secondary-text-color: #727272; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 400px); gap: 20px; align-items: start; }
+  h4 { margin: 0 0 6px; font-weight: 600; opacity: .6; font-size: 12px; }
+  ha-card { display: block; background: #24273a; border: 1px solid rgba(205,214,244,.1); border-radius: 12px; }
+  body.light ha-card { background: #fff; border-color: rgba(0,0,0,.08); }
+</style>
+</head>
+<body>
+<div class="grid" id="grid"></div>
+<script>
+  // stubs of the HA frontend elements the card uses
+  customElements.define("ha-card", class extends HTMLElement {});
+  customElements.define("ha-icon", class extends HTMLElement {
+    static get observedAttributes() { return ["icon"]; }
+    connectedCallback() { this._r(); }
+    attributeChangedCallback() { this._r(); }
+    _r() {
+      if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+      const n = (this.getAttribute("icon") || "").replace("mdi:", "");
+      this.shadowRoot.innerHTML = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+        <style>:host{display:inline-flex;line-height:1} i{font-size:var(--mdc-icon-size,24px)}</style><i class="mdi mdi-${n}"></i>`;
+    }
+  });
+</script>
+<script src="../dist/setti-kettle-card.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const lang = q.get("lang") || "en";
+  if (q.get("theme") === "light") document.body.classList.add("light");
+  const ago = (m) => new Date(Date.now() - m * 60000).toISOString();
+  function hass(o) {
+    o = Object.assign({ cur: 21, tgt: 100, on: false, changed: 30, keep: false, status: "standby", keepTime: 0, today: 0, clean: 13, descale: 13 }, o);
+    const states = {}, entities = {};
+    const add = (id, state, attributes, tk, dev = "k", lc = 60) => {
+      states[id] = { entity_id: id, state: String(state), attributes: attributes || {}, last_changed: ago(lc) };
+      entities[id] = { entity_id: id, device_id: dev, translation_key: tk, platform: "tuya" };
+    };
+    add("switch.kettle_start", o.on ? "on" : "off", {}, "start", "k", o.changed);
+    add("number.kettle_temperature", o.tgt, { min: 0, max: 100, step: 1, unit_of_measurement: "°C" }, "temperature");
+    add("sensor.kettle_current_temperature", o.cur, { unit_of_measurement: "°C" }, "current_temperature");
+    add("sensor.kettle_status", o.status, {}, "status");
+    add("switch.kettle_heat_preservation", o.keep ? "on" : "off", {}, "heat_preservation");
+    add("number.kettle_heat_preservation_time", o.keepTime, { min: 0, max: 120, step: 1 }, "heat_preservation_time");
+    add("counter.kettle_boils_today", o.today, {}, null, null);
+    add("counter.kettle_boils_since_cleaning", o.clean, {}, null, null);
+    add("counter.kettle_boils_since_descaling", o.descale, {}, null, null);
+    if (o.t0 != null) add("input_number.t0", o.t0, {}, null, null);
+    return { states, entities, language: lang, locale: { language: lang }, config: { unit_system: { temperature: "°C" } },
+             callService: (d, s, data) => console.log("callService", d, s, JSON.stringify(data)), callWS: () => Promise.resolve({}),
+             formatEntityState: (s) => s.state };
+  }
+  const scenes = [
+    ["idle", {}, {}],
+    ["heating", { on: true, changed: 1, cur: 62, status: "heating", t0: 21, today: 2 }, { entities: { start_temp: "input_number.t0" } }],
+    ["boiled", { on: false, changed: 0.5, cur: 99, today: 3, clean: 21 }, {}],
+    ["keep warm 80 °C", { tgt: 80, cur: 79, keep: true, status: "warm", keepTime: 60, today: 3, clean: 21, descale: 61 }, { profile: "gotze_jensen_kt975k" }],
+  ];
+  const grid = document.getElementById("grid");
+  for (const [name, o, cfg] of scenes) {
+    const box = document.createElement("div");
+    box.innerHTML = `<h4>${name}</h4>`;
+    const c = document.createElement("setti-kettle-card");
+    c.setConfig(Object.assign({ counters: { today: "counter.kettle_boils_today", cleaning: "counter.kettle_boils_since_cleaning", descaling: "counter.kettle_boils_since_descaling" } }, cfg));
+    box.appendChild(c);
+    grid.appendChild(box);
+    c.hass = hass(o);
+  }
+</script>
+</body>
+</html>

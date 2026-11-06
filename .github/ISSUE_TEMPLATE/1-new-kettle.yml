@@ -1,0 +1,57 @@
+name: New kettle / profile
+description: Your Wi-Fi kettle works (or not) with the card – share it so it works for more people
+title: "Kettle: <brand> <model>"
+labels: [kettle]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! Polish is welcome too / można pisać po polsku.
+        **Never paste** your Tuya local key, API keys or Wi-Fi passwords.
+  - type: input
+    id: kettle
+    attributes:
+      label: Kettle
+      description: Brand and model as on the rating plate, capacity and power
+      placeholder: SETTI+ KT950W, 1.7 L, 2200 W
+    validations:
+      required: true
+  - type: dropdown
+    id: integration
+    attributes:
+      label: Integration
+      options:
+        - Tuya (core, Smart Life app)
+        - tuya-local
+        - LocalTuya
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: entities
+    attributes:
+      label: Entities of the kettle device
+      description: Settings → Devices → your kettle – entity ids, states and attributes (Developer tools → States)
+      render: yaml
+    validations:
+      required: true
+  - type: input
+    id: buttons
+    attributes:
+      label: Temperatures on the kettle's buttons / in the app, keep-warm times
+      placeholder: "40 / 55 / 70 / 85 / 100 °C, keep warm up to 6 h"
+  - type: textarea
+    id: status
+    attributes:
+      label: Status values seen
+      description: The states of the Status sensor while heating, after boiling, keeping warm, without water
+  - type: checkboxes
+    id: works
+    attributes:
+      label: What works
+      options:
+        - label: Found automatically
+        - label: Presets set the temperature
+        - label: Boil / Stop
+        - label: Keep warm and its time
+        - label: Progress and ETA look right

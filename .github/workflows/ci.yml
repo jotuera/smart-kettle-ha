@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Card, languages, blueprint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Languages complete and card up to date
+        run: python3 tools/build_i18n.py --check
+      - name: Card syntax
+        run: node --check dist/setti-kettle-card.js
+      - name: Card logic (mocked Home Assistant)
+        run: node tests/test_card.js
+      - name: YAML files parse
+        run: |
+          pip install pyyaml
+          python3 - <<'PY'
+          import glob, yaml
+          class L(yaml.SafeLoader): pass
+          L.add_constructor("!input", lambda l, n: l.construct_scalar(n))
+          for f in glob.glob("blueprints/**/*.yaml", recursive=True) + glob.glob("packages/*.yaml") + glob.glob(".github/**/*.yml", recursive=True):
+              yaml.load(open(f, encoding="utf-8"), Loader=L); print("ok", f)
+          PY
+
+  hacs:
+    name: HACS validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hacs/action@main
+        with:
+          category: plugin
+          ignore: brands description topics

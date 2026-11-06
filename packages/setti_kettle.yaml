@@ -1,0 +1,19 @@
+# setti-kettle-card – helpers for the boil counters (optional)
+# Copy to /config/packages/setti_kettle.yaml; configuration.yaml needs:
+#   homeassistant:
+#     packages: !include_dir_named packages
+# The card uses these three counters automatically. Count the boils with the blueprint
+# blueprints/automation/jotuera/setti_kettle_boil_counter.yaml.
+counter:
+  kettle_boils_today:
+    name: Kettle boils today
+    icon: mdi:kettle
+    step: 1
+  kettle_boils_since_cleaning:
+    name: Kettle boils since cleaning
+    icon: mdi:spray-bottle
+    step: 1
+  kettle_boils_since_descaling:
+    name: Kettle boils since descaling
+    icon: mdi:kettle-alert
+    step: 1

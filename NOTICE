@@ -1,0 +1,22 @@
+SETTI+ Kettle Card (setti-kettle-card)
+Required Notice: Copyright (c) 2026 JoTu (https://github.com/jotuera)
+Licensed under the PolyForm Noncommercial License 1.0.0 (see LICENSE): free for personal and other
+noncommercial use. Commercial use (installers, resellers, companies) needs a separate license from the author.
+
+The card, the blueprint and the tools were written for this project. The card started as a button-card
+dashboard on the author's Götze & Jensen KT975K. Facts about the kettles (Tuya category "bh" data points,
+status values, temperature ranges) come from the author's kettle and from these public sources, gratefully
+acknowledged – facts only, no code was copied:
+
+- Home Assistant core – Tuya integration (Apache-2.0) – entity mapping of the "bh" smart kettle category
+  https://github.com/home-assistant/core/tree/dev/homeassistant/components/tuya
+- tuya-local – make-all (MIT) – kettle device configurations (data points, ranges, status values)
+  https://github.com/make-all/tuya-local
+- hejdom.pl – review of the SETTI+ KT950W smart kettle in Home Assistant
+  https://hejdom.pl/blog/75-setti/559-smart-czajnik-setti-kt950w-1-7l-2200w.html
+- homeswitch.pl – button-card dashboard for the SETTI+ KT950W
+  https://blog.homeswitch.pl/czajnik/
+
+SETTI+, Götze & Jensen, Tuya, Smart Life, AENO, Fiesta, SilverCrest, Lidl, Webber, Nedis, Weekett, Korex and
+Home Assistant are trademarks of their respective owners. This project is not affiliated with or endorsed by
+any of them.

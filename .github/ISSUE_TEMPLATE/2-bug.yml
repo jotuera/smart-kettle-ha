@@ -1,0 +1,27 @@
+name: Bug
+description: Something does not work as described
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, what did you expect
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Card configuration
+      render: yaml
+  - type: input
+    id: versions
+    attributes:
+      label: Card version, Home Assistant version, kettle and integration
+      placeholder: "0.1.0, HA 2026.11, Götze & Jensen KT975K via Tuya"
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors (F12)
+      render: text
