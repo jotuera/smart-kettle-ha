@@ -1,0 +1,155 @@
+{
+  "core_tuya_kt975k": {
+    "device": "Smart Kettle Götze & Jensen KT975K",
+    "entities": [
+      ["switch.czajnik_start", "start", "tuya"],
+      ["number.czajnik_temperatura", "temperature", "tuya"],
+      ["sensor.czajnik_current_temperature", "current_temperature", "tuya"],
+      ["sensor.czajnik_status", "status", "tuya"],
+      ["switch.czajnik_heat_preservation", "heat_preservation", "tuya"],
+      ["number.czajnik_heat_preservation_time", "heat_preservation_time", "tuya"]
+    ],
+    "roles": {"start": "switch.czajnik_start", "target": "number.czajnik_temperatura", "current": "sensor.czajnik_current_temperature",
+              "status": "sensor.czajnik_status", "keep_warm": "switch.czajnik_heat_preservation", "keep_warm_time": "number.czajnik_heat_preservation_time"}
+  },
+  "core_tuya_celsius_and_fahrenheit": {
+    "device": "Smart Kettle",
+    "entities": [
+      ["switch.k_start", "start", "tuya"],
+      ["number.k_temperature_2", "temperature", "tuya"],
+      ["number.k_temperature", "temperature", "tuya"],
+      ["sensor.k_current_temperature_2", "current_temperature", "tuya"],
+      ["sensor.k_current_temperature", "current_temperature", "tuya"]
+    ],
+    "roles": {"start": "switch.k_start", "target": "number.k_temperature", "current": "sensor.k_current_temperature"}
+  },
+  "tuya_local_setti": {
+    "device": "SETTI+ KT950W",
+    "entities": [
+      ["water_heater.setti_kettle", "kettle", "tuya_local"],
+      ["switch.setti_kettle_keep_warm", null, "tuya_local"],
+      ["number.setti_kettle_keep_warm_time", "timer", "tuya_local"],
+      ["sensor.setti_kettle_status", "status", "tuya_local"],
+      ["select.setti_kettle_kettle_mode", "kettle_mode", "tuya_local"],
+      ["select.setti_kettle_temperature_unit", "temperature_unit", "tuya_local"],
+      ["binary_sensor.setti_kettle_problem", null, "tuya_local"]
+    ],
+    "roles": {"water_heater": "water_heater.setti_kettle", "keep_warm": "switch.setti_kettle_keep_warm",
+              "keep_warm_time": "number.setti_kettle_keep_warm_time", "status": "sensor.setti_kettle_status"}
+  },
+  "tuya_local_fiesta": {
+    "device": "Fiesta DK-1G",
+    "entities": [
+      ["water_heater.fiesta_kettle", "kettle", "tuya_local"],
+      ["button.fiesta_kettle_start", null, "tuya_local"],
+      ["sensor.fiesta_kettle_status", "status", "tuya_local"]
+    ],
+    "roles": {"water_heater": "water_heater.fiesta_kettle", "start_button": "button.fiesta_kettle_start", "status": "sensor.fiesta_kettle_status"}
+  },
+  "tuya_local_aeno_ek7s": {
+    "device": "AENO EK7S",
+    "entities": [
+      ["water_heater.aeno_kettle", "kettle", "tuya_local"],
+      ["switch.aeno_kettle_keep_warm", null, "tuya_local"],
+      ["time.aeno_kettle_keep_warm_time", null, "tuya_local"]
+    ],
+    "roles": {"water_heater": "water_heater.aeno_kettle", "keep_warm": "switch.aeno_kettle_keep_warm", "keep_warm_time": "time.aeno_kettle_keep_warm_time"}
+  },
+  "tuya_local_kogan_glass": {
+    "device": "Kogan glass kettle",
+    "entities": [["climate.kogan_glass_kettle", null, "tuya_local"]],
+    "roles": {"climate": "climate.kogan_glass_kettle"}
+  },
+  "fellow_stagg_ekg_pro": {
+    "device": "Stagg EKG Pro",
+    "entities": [
+      ["climate.stagg_ekg_pro", null, "fellow_stagg"],
+      ["select.stagg_ekg_pro_hold_duration", "hold_duration", "fellow_stagg"],
+      ["sensor.stagg_ekg_pro_current_temp", null, "fellow_stagg"],
+      ["sensor.stagg_ekg_pro_device_state", null, "fellow_stagg"]
+    ],
+    "roles": {"climate": "climate.stagg_ekg_pro", "keep_warm_time": "select.stagg_ekg_pro_hold_duration",
+              "current": "sensor.stagg_ekg_pro_current_temp", "status": "sensor.stagg_ekg_pro_device_state"}
+  },
+  "fellow_stagg_ekg_plus": {
+    "device": "Stagg EKG+",
+    "entities": [
+      ["water_heater.stagg_ekg", null, "fellow_stagg"],
+      ["switch.stagg_ekg_power", null, "fellow_stagg"],
+      ["number.stagg_ekg_target_temperature", null, "fellow_stagg"],
+      ["sensor.stagg_ekg_current_temp", null, "fellow_stagg"],
+      ["sensor.stagg_ekg_target_temp", null, "fellow_stagg"]
+    ],
+    "roles": {"water_heater": "water_heater.stagg_ekg", "start": "switch.stagg_ekg_power",
+              "target": "number.stagg_ekg_target_temperature", "current": "sensor.stagg_ekg_current_temp"}
+  },
+  "redmond_skykettle": {
+    "device": "SkyKettle RK-G211S",
+    "entities": [
+      ["water_heater.skykettle_rk_g211s", null, "skykettle"],
+      ["switch.skykettle_rk_g211s_boil", null, "skykettle"],
+      ["light.skykettle_rk_g211s_light", null, "skykettle"],
+      ["sensor.skykettle_rk_g211s_energy", null, "skykettle"]
+    ],
+    "roles": {"water_heater": "water_heater.skykettle_rk_g211s"}
+  },
+  "xiaomi_kettle_2_pro": {
+    "device": "xiaomi.kettle.v20",
+    "entities": [
+      ["switch.xiaomi_v20_ab12_on", null, "xiaomi_miot"],
+      ["number.xiaomi_v20_ab12_target_temperature", null, "xiaomi_miot"],
+      ["sensor.xiaomi_v20_ab12_temperature", null, "xiaomi_miot"],
+      ["sensor.xiaomi_v20_ab12_status", null, "xiaomi_miot"],
+      ["switch.xiaomi_v20_ab12_auto_keep_warm", null, "xiaomi_miot"],
+      ["number.xiaomi_v20_ab12_keep_warm_time", null, "xiaomi_miot"],
+      ["number.xiaomi_v20_ab12_keep_warm_temperature", null, "xiaomi_miot"],
+      ["button.xiaomi_v20_ab12_stop_work", null, "xiaomi_miot"]
+    ],
+    "roles": {"start": "switch.xiaomi_v20_ab12_on", "target": "number.xiaomi_v20_ab12_target_temperature",
+              "current": "sensor.xiaomi_v20_ab12_temperature", "status": "sensor.xiaomi_v20_ab12_status",
+              "keep_warm": "switch.xiaomi_v20_ab12_auto_keep_warm", "keep_warm_time": "number.xiaomi_v20_ab12_keep_warm_time",
+              "keep_warm_temp": "number.xiaomi_v20_ab12_keep_warm_temperature", "stop_button": "button.xiaomi_v20_ab12_stop_work"}
+  },
+  "xiaomi_mi_kettle_pro_ble": {
+    "device": "Mi Smart Kettle Pro",
+    "entities": [
+      ["button.mi_kettle_pro_heat", null, "mi_kettle_pro"],
+      ["button.mi_kettle_pro_warm", null, "mi_kettle_pro"],
+      ["number.mi_kettle_pro_heating_temperature", null, "mi_kettle_pro"],
+      ["number.mi_kettle_pro_keep_warm_temperature", null, "mi_kettle_pro"],
+      ["sensor.mi_kettle_pro_current_temperature", null, "mi_kettle_pro"],
+      ["sensor.mi_kettle_pro_status", null, "mi_kettle_pro"]
+    ],
+    "roles": {"start_button": "button.mi_kettle_pro_heat", "target": "number.mi_kettle_pro_heating_temperature",
+              "keep_warm_temp": "number.mi_kettle_pro_keep_warm_temperature", "current": "sensor.mi_kettle_pro_current_temperature",
+              "status": "sensor.mi_kettle_pro_status"}
+  },
+  "smarter_ikettle": {
+    "device": "iKettle 3.0",
+    "entities": [
+      ["switch.ikettle_boiling", null, "smarter"],
+      ["number.ikettle_boil_temperature", null, "smarter"],
+      ["sensor.ikettle_water_temperature", null, "smarter"],
+      ["sensor.ikettle_target_temperature", null, "smarter"],
+      ["number.ikettle_keep_warm_time", null, "smarter"],
+      ["sensor.ikettle_state", null, "smarter"]
+    ],
+    "roles": {"start": "switch.ikettle_boiling", "target": "number.ikettle_boil_temperature", "current": "sensor.ikettle_water_temperature",
+              "keep_warm_time": "number.ikettle_keep_warm_time", "status": "sensor.ikettle_state"}
+  },
+  "govee_h7173": {
+    "device": "Govee Kettle H7173",
+    "entities": [
+      ["switch.govee_kettle_powerswitch", null, "mqtt"],
+      ["number.govee_kettle_temperaturesetting", null, "mqtt"],
+      ["sensor.govee_kettle_temperature", null, "mqtt"]
+    ],
+    "roles": {"start": "switch.govee_kettle_powerswitch", "target": "number.govee_kettle_temperaturesetting", "current": "sensor.govee_kettle_temperature"}
+  },
+  "not_a_kettle_washer": {
+    "device": "Washing machine",
+    "kettle": false,
+    "entities": [["switch.washer_start", "start", "tuya"], ["sensor.washer_power", null, "tuya"]],
+    "roles": {"start": "switch.washer_start"}
+  }
+}

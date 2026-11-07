@@ -109,5 +109,13 @@
   "h_power": "Rated power – for the amount of water and the energy estimate.",
   "h_energy_entity": "Optional – a kWh meter of the kettle's plug, instead of the estimate.",
   "h_drink": "Lets the blueprints know the drink (steeping notification, formula stage 2).",
-  "h_water_hardness": "Descaling interval when not set: soft 120, medium 60, hard 30 boils."
+  "h_water_hardness": "Descaling interval when not set: soft 120, medium 60, hard 30 boils.",
+  "st_off_base": "off the base",
+  "st_fault": "fault",
+  "e_climate": "Climate (Fellow, Kogan glass)",
+  "e_start_button": "Start button",
+  "e_stop_button": "Stop button",
+  "e_keep_warm_temp": "Keep warm temperature",
+  "e_fault": "Fault sensor",
+  "e_time_left": "Time left sensor"
 }

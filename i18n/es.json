@@ -109,5 +109,13 @@
   "h_power": "Potencia nominal – para la cantidad de agua y la estimación de energía.",
   "h_energy_entity": "Opcional – contador kWh del enchufe en lugar de la estimación.",
   "h_drink": "Comunica la bebida a los blueprints (aviso de infusión, 2ª fase de la leche).",
-  "h_water_hardness": "Descalcificación si no se fija: blanda 120, media 60, dura 30 hervidos."
+  "h_water_hardness": "Descalcificación si no se fija: blanda 120, media 60, dura 30 hervidos.",
+  "st_off_base": "fuera de la base",
+  "st_fault": "avería",
+  "e_climate": "Clima (Fellow, Kogan cristal)",
+  "e_start_button": "Botón iniciar",
+  "e_stop_button": "Botón parar",
+  "e_keep_warm_temp": "Temperatura de mantenimiento",
+  "e_fault": "Sensor de avería",
+  "e_time_left": "Sensor de tiempo restante"
 }

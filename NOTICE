@@ -12,11 +12,15 @@ acknowledged – facts only, no code was copied:
   https://github.com/home-assistant/core/tree/dev/homeassistant/components/tuya
 - tuya-local – make-all (MIT) – kettle device configurations (data points, ranges, status values)
   https://github.com/make-all/tuya-local
+- Integrations whose entities Smart Kettle uses (facts only – entity layouts, no code copied):
+  skykettle-ha – ClusterM (https://github.com/ClusterM/skykettle-ha), stagg-ekg-plus-ha – bramboe and levi,
+  staggassistant – fabiankirchen, hass-xiaomi-miot – al-one, mi_kettle_pro – asruda, ha-smarter-integration –
+  kbirger, govee2mqtt – wez
 - hejdom.pl – review of the SETTI+ KT950W smart kettle in Home Assistant
   https://hejdom.pl/blog/75-setti/559-smart-czajnik-setti-kt950w-1-7l-2200w.html
 - homeswitch.pl – button-card dashboard for the SETTI+ KT950W
   https://blog.homeswitch.pl/czajnik/
 
-SETTI+, Götze & Jensen, Tuya, Smart Life, AENO, Fiesta, SilverCrest, Lidl, Webber, Nedis, Weekett, Korex and
-Home Assistant are trademarks of their respective owners. This project is not affiliated with or endorsed by
+SETTI+, Götze & Jensen, Tuya, Smart Life, AENO, Fiesta, SilverCrest, Lidl, Webber, Nedis, Weekett, Korex, Kogan,
+Xiaomi, Mijia, Fellow, Stagg, Redmond, SkyKettle, Smarter, iKettle, Govee and Home Assistant are trademarks of their respective owners. This project is not affiliated with or endorsed by
 any of them.

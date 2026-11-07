@@ -26,8 +26,12 @@ jobs:
         run: python3 tools/build_i18n.py --check
       - name: Card syntax
         run: node --check dist/smart-kettle-card.js
-      - name: Card logic (mocked Home Assistant)
-        run: node tests/test_card.js
+      - name: Card logic (mocked Home Assistant) and other ecosystems
+        run: |
+          node tests/test_card.js
+          node tests/test_brands.js
+      - name: Card and integration find the same entities and profiles for every kettle
+        run: python3 tests/test_roles.py
       - name: Integration – bundled card and translations up to date, Python compiles
         run: |
           python3 tools/build_integration.py --check

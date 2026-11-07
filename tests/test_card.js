@@ -154,7 +154,8 @@ ok("buttons call the right services", () => {
   assert.deepStrictEqual(JSON.parse(JSON.stringify(h.calls)), [
     ["number", "set_value", { entity_id: "number.czajnik_temperatura", value: 85 }],
     ["switch", "turn_on", { entity_id: "switch.czajnik_start" }],
-    ["switch", "turn_off", { entity_id: ["switch.czajnik_start", "switch.czajnik_heat_preservation"] }],
+    ["switch", "turn_off", { entity_id: "switch.czajnik_start" }],
+    ["switch", "turn_off", { entity_id: "switch.czajnik_heat_preservation" }],
     ["number", "set_value", { entity_id: "number.czajnik_heat_preservation_time", value: 120 }],
   ]);
 });

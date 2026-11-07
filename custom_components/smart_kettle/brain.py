@@ -29,6 +29,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.translation import async_get_translations
 from homeassistant.util import dt as dt_util
 
+from .roles import HEAT_STATUS, match_roles, looks_like_kettle
 from .const import (
     CONF_BOIL_THRESHOLD,
     CONF_CLEANING_EVERY,
@@ -55,58 +56,25 @@ _LOGGER = logging.getLogger(__name__)
 STORE_VERSION = 1
 OFF_STATES = (STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN)
 
-# role -> (domain, translation keys, entity id fallback)
-ROLES: dict[str, tuple[str, tuple[str, ...], str]] = {
-    "start": ("switch", ("start",), r"_start$|_power$"),
-    "target": ("number", ("temperature", "target_temperature", "temp_set"), r"_temperatur[ae]$|_temp_set$|_target_temperature$"),
-    "current": ("sensor", ("current_temperature",), r"_current_temperature$"),
-    "status": ("sensor", ("status", "kettle_status"), r"_status$"),
-    "keep_warm": ("switch", ("heat_preservation", "keep_warm"), r"_heat_preservation$|_keep_warm$"),
-    "keep_warm_time": ("number", ("heat_preservation_time", "keep_warm_time"), r"_heat_preservation_time$|_keep_warm_time$"),
-    "water_heater": ("water_heater", ("kettle",), r"."),
-}
-
-
 def resolve_kettle(hass: HomeAssistant, device_id: str) -> dict[str, str]:
-    """Entities of the kettle device by their translation keys (any language, any entity id)."""
+    """Entities of the kettle device by their translation keys or entity id endings (any language, any integration)."""
     reg = er.async_get(hass)
-    ents = [e for e in er.async_entries_for_device(reg, device_id) if not e.disabled_by and e.platform != DOMAIN]
-    out: dict[str, str] = {}
-    for role, (domain, keys, pattern) in ROLES.items():
-        cands = sorted((e for e in ents if e.domain == domain and e.translation_key in keys), key=lambda e: len(e.entity_id))
-        if not cands and role != "water_heater":
-            cands = sorted(
-                (e for e in ents if e.domain == domain and re.search(pattern, e.entity_id) and e.entity_id not in out.values()
-                 and not (role == "target" and "current" in e.entity_id) and not (role == "keep_warm" and "time" in e.entity_id)),
-                key=lambda e: len(e.entity_id),
-            )
-        if role == "water_heater" and not cands:
-            cands = [e for e in ents if e.domain == "water_heater"]
-        if cands:
-            out[role] = cands[0].entity_id
-    return out
+    return match_roles((e.entity_id, e.translation_key) for e in er.async_entries_for_device(reg, device_id)
+                       if not e.disabled_by and e.platform != DOMAIN)
 
 
 def find_kettles(hass: HomeAssistant) -> dict[str, str]:
     """device_id -> name of every device that looks like a kettle."""
     devs = dr.async_get(hass)
-    found: dict[str, str] = {}
-    by_dev: dict[str, set[str]] = {}
+    by_dev: dict[str, list[tuple[str, str | None, str | None]]] = {}
     for e in er.async_get(hass).entities.values():
-        if not e.device_id or e.disabled_by or e.platform == DOMAIN:
-            continue
-        tags = by_dev.setdefault(e.device_id, set())
-        if e.domain == "water_heater" and (e.translation_key == "kettle" or re.search("kettle|czajnik|kocher", e.entity_id)):
-            tags.add("wh")
-        if e.domain == "switch" and e.translation_key == "start":
-            tags.add("start")
-        if e.domain == "sensor" and e.translation_key == "current_temperature":
-            tags.add("cur")
-    for dev_id, tags in by_dev.items():
-        if "wh" in tags or {"start", "cur"} <= tags:
-            d = devs.async_get(dev_id)
-            if d:
-                found[dev_id] = d.name_by_user or d.name or dev_id
+        if e.device_id and not e.disabled_by and e.platform != DOMAIN:
+            by_dev.setdefault(e.device_id, []).append((e.entity_id, e.translation_key, e.platform))
+    found: dict[str, str] = {}
+    for dev_id, ents in by_dev.items():
+        d = devs.async_get(dev_id)
+        if d and looks_like_kettle(ents, " ".join(x for x in (d.model, d.model_id, d.name, d.name_by_user) if x)):
+            found[dev_id] = d.name_by_user or d.name or dev_id
     return found
 
 
@@ -164,14 +132,16 @@ class KettleBrain:
         self.data.setdefault("ready_on", False)
         self._new_day_if_needed()
         self.ent = resolve_kettle(self.hass, self.device_id)
-        if not self.ent.get("start") and not self.ent.get("water_heater"):
-            _LOGGER.warning("Smart Kettle: no Start switch / water heater found on device %s", self.device_id)
-        watch = [x for x in (self.ent.get("start"), self.ent.get("water_heater"), self.ent.get("current")) if x]
+        if not any(self.ent.get(k) for k in ("start", "water_heater", "climate", "start_button")):
+            _LOGGER.warning("Smart Kettle: no start switch / button, water heater or climate found on device %s", self.device_id)
+        _LOGGER.debug("Smart Kettle entities of %s: %s", self.device_id, self.ent)
+        watch = [self.ent[k] for k in ("start", "water_heater", "climate", "status", "current") if self.ent.get(k)]
         if watch:
             self._unsubs.append(async_track_state_change_event(self.hass, watch, self._on_change))
         self._unsubs.append(async_track_time_change(self.hass, self._midnight, hour=0, minute=0, second=1))
         self._unsubs.append(async_track_time_interval(self.hass, self._ready_tick, timedelta(seconds=30)))
-        if self.is_on:
+        self._was_on = self.is_on
+        if self._was_on:
             self._on_at = dt_util.utcnow()
             self._t0 = self.current
 
@@ -192,42 +162,60 @@ class KettleBrain:
         eid = self.ent.get(role)
         return self.hass.states.get(eid) if eid else None
 
+    def _main(self):
+        """The kettle's main entity: water_heater or climate (None for switch / number kettles)."""
+        return self._state("water_heater") or self._state("climate")
+
+    def _ops(self) -> list[str]:
+        wh = self._state("water_heater")
+        return list(wh.attributes.get("operation_list") or []) if wh else []
+
     @property
     def is_on(self) -> bool:
-        wh = self._state("water_heater")
-        if wh is not None:
-            return wh.state not in OFF_STATES
         s = self._state("start")
-        return s is not None and s.state == "on"
+        if s is not None:
+            on = s.state == "on"
+        elif (cl := self._state("climate")) is not None:
+            on = cl.state not in OFF_STATES or cl.attributes.get("hvac_action") == "heating"
+        elif (wh := self._state("water_heater")) is not None and self._ops():
+            on = wh.state not in OFF_STATES
+        else:
+            on = False
+        st = self._state("status")
+        if st is not None and re.sub(r"[\s-]+", "_", st.state.lower()) in HEAT_STATUS:
+            on = True
+        return on
+
+    @staticmethod
+    def _f(v: Any) -> float | None:
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
 
     @property
     def current(self) -> float | None:
-        wh = self._state("water_heater")
-        try:
-            if wh is not None:
-                return float(wh.attributes.get("current_temperature"))
-            s = self._state("current")
-            return float(s.state) if s else None
-        except (TypeError, ValueError):
-            return None
+        m = self._main()
+        if m is not None and (v := self._f(m.attributes.get("current_temperature"))) is not None:
+            return v
+        s = self._state("current")
+        return self._f(s.state) if s else None
 
     @property
     def target(self) -> float | None:
-        wh = self._state("water_heater")
-        try:
-            if wh is not None:
-                return float(wh.attributes.get("temperature"))
-            s = self._state("target")
-            return float(s.state) if s else None
-        except (TypeError, ValueError):
-            return None
+        s = self._state("target")
+        if s is not None:
+            return self._f(s.state)
+        m = self._main()
+        return self._f(m.attributes.get("temperature")) if m is not None else None
 
     def _limits(self) -> tuple[float, float, float]:
-        s = self._state("water_heater") or self._state("target")
+        s = self._state("target") or self._main()
         if s is None:
             return 0, 100, 1
         a = s.attributes
-        return float(a.get("min", a.get("min_temp", 0)) or 0), float(a.get("max", a.get("max_temp", 100)) or 100), float(a.get("step", 1) or 1)
+        return (float(a.get("min", a.get("min_temp", 0)) or 0), float(a.get("max", a.get("max_temp", 100)) or 100),
+                float(a.get("step", a.get("target_temp_step", 1)) or 1))
 
     def snap(self, t: float) -> float:
         lo, hi, step = self._limits()
@@ -235,32 +223,89 @@ class KettleBrain:
         return round(round((v - lo) / step) * step + lo)
 
     # ---- actions on the kettle
+    async def _call(self, domain: str, service: str, data: dict[str, Any]) -> None:
+        await self.hass.services.async_call(domain, service, data, blocking=True)
+
     async def async_set_target(self, t: float) -> None:
         t = self.snap(t)
-        if self.ent.get("water_heater"):
-            await self.hass.services.async_call("water_heater", "set_temperature", {"entity_id": self.ent["water_heater"], "temperature": t}, blocking=True)
-        elif self.ent.get("target"):
-            await self.hass.services.async_call("number", "set_value", {"entity_id": self.ent["target"], "value": t}, blocking=True)
+        if self.ent.get("target"):
+            await self._call("number", "set_value", {"entity_id": self.ent["target"], "value": t})
+        elif (wh := self._state("water_heater")) is not None and wh.attributes.get("temperature") is not None:
+            await self._call("water_heater", "set_temperature", {"entity_id": self.ent["water_heater"], "temperature": t})
+        elif (cl := self._state("climate")) is not None and cl.attributes.get("temperature") is not None:
+            await self._call("climate", "set_temperature", {"entity_id": self.ent["climate"], "temperature": t})
+
+    def _heat_mode(self) -> str | None:
+        ops = [m for m in self._ops() if m != "off"]
+        if "electric" in ops:
+            return "electric"
+        if "boil" in ops and ((self.target or 100) >= 90 or "heat" not in ops):
+            return "boil"
+        for m in ("heat", "on", "eco", "performance"):
+            if m in ops:
+                return m
+        return ops[0] if ops else None
 
     async def async_start(self) -> None:
-        if self.ent.get("water_heater"):
-            wh = self._state("water_heater")
-            modes = [m for m in (wh.attributes.get("operation_list") or []) if m != "off"] if wh else []
-            if modes:
-                await self.hass.services.async_call("water_heater", "set_operation_mode", {
-                    "entity_id": self.ent["water_heater"], "operation_mode": "electric" if "electric" in modes else modes[0]}, blocking=True)
-            else:
-                await self.hass.services.async_call("water_heater", "turn_on", {"entity_id": self.ent["water_heater"]}, blocking=True)
-        elif self.ent.get("start"):
-            await self.hass.services.async_call("switch", "turn_on", {"entity_id": self.ent["start"]}, blocking=True)
+        if self.ent.get("start"):
+            await self._call("switch", "turn_on", {"entity_id": self.ent["start"]})
+        elif self.ent.get("climate") and not self.ent.get("water_heater"):
+            await self._call("climate", "set_hvac_mode", {"entity_id": self.ent["climate"], "hvac_mode": "heat"})
+        elif self.ent.get("water_heater") and (mode := self._heat_mode()):
+            await self._call("water_heater", "set_operation_mode", {"entity_id": self.ent["water_heater"], "operation_mode": mode})
+        elif self.ent.get("start_button"):
+            await self._call("button", "press", {"entity_id": self.ent["start_button"]})
+        elif self.ent.get("water_heater"):
+            await self._call("water_heater", "turn_on", {"entity_id": self.ent["water_heater"]})
+
+    @staticmethod
+    def _minutes(v: Any) -> float:
+        s = str(v)
+        if re.match(r"^\d+:\d+", s):
+            h, m = s.split(":")[:2]
+            return int(h) * 60 + int(m)
+        x = re.match(r"^\s*(\d+(?:\.\d+)?)", s)
+        return float(x.group(1)) * (60 if "h" in s.lower() and "min" not in s.lower() else 1) if x else 0
+
+    def _closest_option(self, eid: str, value: float) -> str | None:
+        s = self.hass.states.get(eid)
+        opts = list(s.attributes.get("options") or []) if s else []
+        nums = [(abs(self._minutes(o) - value), o) for o in opts if re.match(r"^\s*\d", str(o))]
+        return min(nums)[1] if nums else (opts[0] if opts else None)
 
     async def async_keep_warm(self, minutes: float | None) -> None:
-        if minutes and self.ent.get("keep_warm_time"):
-            s = self._state("keep_warm_time")
-            mx = float(s.attributes.get("max", minutes)) if s else minutes
-            await self.hass.services.async_call("number", "set_value", {"entity_id": self.ent["keep_warm_time"], "value": min(minutes, mx)}, blocking=True)
+        """Keep warm for `minutes` (None / 0 = off): time as number, time entity or select; then the switch."""
+        eid = self.ent.get("keep_warm_time")
+        if eid:
+            dom = eid.split(".")[0]
+            s = self.hass.states.get(eid)
+            if minutes and dom == "number":
+                mx = self._f(s.attributes.get("max")) if s else None
+                await self._call("number", "set_value", {"entity_id": eid, "value": min(minutes, mx) if mx else minutes})
+            elif minutes and dom == "time":
+                m = int(min(minutes, 1439))
+                await self._call("time", "set_value", {"entity_id": eid, "time": f"{m // 60:02d}:{m % 60:02d}:00"})
+            elif dom == "select" and s is not None:
+                opts = list(s.attributes.get("options") or [])
+                off = next((o for o in opts if not re.match(r"^\s*[1-9]", str(o))), None)
+                option = self._closest_option(eid, minutes) if minutes else off
+                if option:
+                    await self._call("select", "select_option", {"entity_id": eid, "option": option})
         if self.ent.get("keep_warm"):
-            await self.hass.services.async_call("switch", "turn_on" if minutes else "turn_off", {"entity_id": self.ent["keep_warm"]}, blocking=True)
+            await self._call("switch", "turn_on" if minutes else "turn_off", {"entity_id": self.ent["keep_warm"]})
+
+    async def async_hold_at(self, temp: float, minutes: float) -> None:
+        """Second stage of a drink: hold `temp` – the kettle's keep-warm temperature when it has one, else the target."""
+        eid = self.ent.get("keep_warm_temp")
+        if eid and eid.startswith("select."):
+            option = self._closest_option(eid, temp)
+            if option:
+                await self._call("select", "select_option", {"entity_id": eid, "option": option})
+        elif eid:
+            await self._call("number", "set_value", {"entity_id": eid, "value": temp})
+        else:
+            await self.async_set_target(temp)
+        await self.async_keep_warm(minutes)
 
     async def async_set_drink(self, key: str, start: bool = False) -> None:
         """Set a drink (from the select entity or the card): target, keep warm; remembered for its stages."""
@@ -305,15 +350,15 @@ class KettleBrain:
 
     @callback
     def _on_change(self, event: Event[EventStateChangedData]) -> None:
-        eid = event.data["entity_id"]
-        new, old = event.data["new_state"], event.data["old_state"]
-        if eid in (self.ent.get("start"), self.ent.get("water_heater")):
-            was_on = old is not None and old.state not in OFF_STATES
-            now_on = self.is_on
+        new = event.data["new_state"]
+        # heating on / off from the start switch, the main entity or the status – whichever the kettle has
+        if new is not None and new.state != STATE_UNAVAILABLE:
+            was_on, now_on = getattr(self, "_was_on", False), self.is_on
+            self._was_on = now_on
             if now_on and not was_on:
                 self._on_at = dt_util.utcnow()
                 self._t0 = self.current
-            elif was_on and not now_on and new is not None and new.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            elif was_on and not now_on:
                 self.hass.async_create_task(self._after_heating())
         cur = self.current
         if cur is None:
@@ -369,8 +414,7 @@ class KettleBrain:
         if drink and drink.get("then") is not None and self.data.get("stage2_done") != self.data.get("drink_at"):
             self.data["stage2_done"] = self.data.get("drink_at")
             self._save()
-            await self.async_set_target(drink["then"])
-            await self.async_keep_warm(drink.get("keep") or 60)
+            await self.async_hold_at(drink["then"], drink.get("keep") or 60)
         name = await self._drink_name(drink["key"]) if drink else None
         if self.opts.get(CONF_NOTIFY_BOILED):
             key = "boiled" if name else "water"

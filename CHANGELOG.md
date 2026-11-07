@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0 – 2026-11-07
+
+- **Kettles worldwide** – besides Tuya, the card and the integration now work with the kettles of **Xiaomi / Mijia**
+  (xiaomi_miot, mi_kettle_pro), **Fellow Stagg EKG Pro / EKG+**, **Redmond SkyKettle**, **Smarter iKettle 3.0** and
+  **Govee** (govee2mqtt), and with every tuya-local kettle layout: kettles started by a `climate` (heat / off, presets
+  as the *Modes* tab), by a `button` (Start / Stop), by a `water_heater` with any heating mode (electric, on, boil,
+  heat, boil_heat), keep-warm time as a number, `time` entity or select, a separate keep-warm temperature (used for
+  the formula's second step), a fault binary sensor (red tile) and the kettle's own countdown.
+- Devices are recognised by their model too (e.g. `xiaomi.kettle.v20`); status words of all integrations translated.
+- **14 new profiles** – Blaupunkt BKW825, Statesman / DMD (UK), UK 3 kW, Kogan glass (AU / NZ), Anko (Kmart), Homend,
+  tea-mode kettles, US gooseneck (°F), Xiaomi 2 Pro, Mi Kettle Pro, Fellow Stagg, SkyKettle, Smarter, Govee.
+- [docs/models.md](docs/models.md) – ecosystems and ~30 Tuya kettles by region.
+- The entity rules live in `custom_components/smart_kettle/roles.py`; `tests/test_roles.py` checks that the card and
+  the integration find the same entities and profiles for 14 kettles; `tests/test_brands.js` – 12 brand tests.
+
 ## 0.3.0 – 2026-11-07
 
 - **New name: Smart Kettle** – the project works with any Tuya / Smart Life kettle, not only SETTI+. Repository

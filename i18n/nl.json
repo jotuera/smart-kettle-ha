@@ -109,5 +109,13 @@
   "h_power": "Nominaal vermogen – voor de hoeveelheid water en de energieschatting.",
   "h_energy_entity": "Optioneel – kWh-meter van het stopcontact in plaats van de schatting.",
   "h_drink": "Geeft de drank door aan de blueprints (trekmelding, flesvoeding fase 2).",
-  "h_water_hardness": "Ontkalken indien niet ingesteld: zacht 120, middel 60, hard 30 keer."
+  "h_water_hardness": "Ontkalken indien niet ingesteld: zacht 120, middel 60, hard 30 keer.",
+  "st_off_base": "van de voet genomen",
+  "st_fault": "storing",
+  "e_climate": "Klimaat (Fellow, Kogan glas)",
+  "e_start_button": "Startknop",
+  "e_stop_button": "Stopknop",
+  "e_keep_warm_temp": "Warmhoudtemperatuur",
+  "e_fault": "Storingssensor",
+  "e_time_left": "Resttijdsensor"
 }

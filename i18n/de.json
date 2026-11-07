@@ -109,5 +109,13 @@
   "h_power": "Nennleistung – für Wassermenge und Energieschätzung.",
   "h_energy_entity": "Optional – kWh-Zähler der Steckdose statt der Schätzung.",
   "h_drink": "Teilt den Blueprints das Getränk mit (Ziehzeit-Meldung, Babynahrung Stufe 2).",
-  "h_water_hardness": "Entkalken, wenn nicht gesetzt: weich 120, mittel 60, hart 30 Kochvorgänge."
+  "h_water_hardness": "Entkalken, wenn nicht gesetzt: weich 120, mittel 60, hart 30 Kochvorgänge.",
+  "st_off_base": "vom Sockel genommen",
+  "st_fault": "Störung",
+  "e_climate": "Klima (Fellow, Kogan Glas)",
+  "e_start_button": "Start-Taste",
+  "e_stop_button": "Stopp-Taste",
+  "e_keep_warm_temp": "Warmhaltetemperatur",
+  "e_fault": "Störungssensor",
+  "e_time_left": "Restzeit-Sensor"
 }

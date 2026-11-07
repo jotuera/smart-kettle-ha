@@ -109,5 +109,13 @@
   "h_power": "Potenza nominale – per la quantità d'acqua e la stima dell'energia.",
   "h_energy_entity": "Facoltativo – contatore kWh della presa invece della stima.",
   "h_drink": "Comunica la bevanda ai blueprint (notifica infusione, 2ª fase del latte).",
-  "h_water_hardness": "Decalcificazione se non impostata: dolce 120, media 60, dura 30 bolliture."
+  "h_water_hardness": "Decalcificazione se non impostata: dolce 120, media 60, dura 30 bolliture.",
+  "st_off_base": "tolto dalla base",
+  "st_fault": "guasto",
+  "e_climate": "Clima (Fellow, Kogan vetro)",
+  "e_start_button": "Pulsante avvio",
+  "e_stop_button": "Pulsante stop",
+  "e_keep_warm_temp": "Temperatura di mantenimento",
+  "e_fault": "Sensore guasto",
+  "e_time_left": "Sensore tempo rimanente"
 }

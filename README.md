@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-jotuera-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/jotuera)
 
-**A Home Assistant integration and Lovelace card for Tuya / Smart Life Wi-Fi kettles – SETTI+ KT950W, Götze & Jensen KT975K, AENO, Lidl SilverCrest and others.** In Home
+**A Home Assistant integration and Lovelace card for smart kettles – Tuya / Smart Life (SETTI+, Götze & Jensen, AENO, Lidl SilverCrest, Kogan…), Xiaomi, Fellow Stagg, Redmond SkyKettle, Smarter iKettle and Govee.** In Home
 Assistant a smart kettle is a switch, a number and a temperature sensor. This card turns them into a kettle: how far it
 is to the target and how long it will take, how much water you poured in, one-tap temperatures **and drinks** (green
 tea 80 °C with a steeping countdown, baby formula boiled and held at 45 °C…), Boil / Stop, keep warm, *ready at 6:30*,
@@ -21,7 +21,7 @@ custom cards, no YAML templates.
 > Built on the author's **Götze & Jensen KT975K** (Tuya core integration), from a button-card dashboard used since
 > September 2026. The **SETTI+ KT950W** has the same entities in HA. Other kettles: [docs/models.md](docs/models.md).
 >
-> **Status: beta (0.3.0).** The card runs on the author's kettle; its logic is covered by tests with a mocked HA.
+> **Status: beta (0.4.0).** Now for kettles of Tuya, Xiaomi, Fellow, Redmond, Smarter and Govee. The card runs on the author's kettle; its logic is covered by tests with a mocked HA.
 > **New in 0.3.0: a Home Assistant integration** that installs the card by itself and replaces the helpers and
 > blueprints – install in three clicks.
 
@@ -175,16 +175,22 @@ URL) and create an automation from each one you want:
 After cleaning or descaling **hold** the counter on the card to reset it. Your own counters work too – set them under
 `counters:`.
 
-## Kettles
+## Kettles – worldwide
 
-| Kettle | Integration | Profile | Status |
+| Ecosystem | Kettles | Integration it works with | Status |
 |---|---|---|---|
-| **Götze & Jensen KT975K** | Tuya | `gotze_jensen_kt975k` | **tested** |
-| **SETTI+ KT950W** | Tuya, tuya-local | `setti_kt950w` | same entities as the KT975K |
-| AENO EK7S, Fiesta DK1G, SilverCrest (Lidl Home), Webber WK115, Nedis SmartLife, Weekett, Korex, Blow, Goldair… | Tuya, tuya-local | own profiles / `auto` | untested |
+| **Tuya / Smart Life** (Lidl Home, Nedis, Kogan, AENO…) | Götze & Jensen KT975K, **SETTI+ KT950W**, AENO, Fiesta, SilverCrest, Svensson, WeeKett, Koenic / ProfiCook, Homend, Nedis, Blow, Statesman, DMD, Kogan, Korex, Anko, Goldair, Blaupunkt, Vizia… | core Tuya, tuya-local, LocalTuya | **tested** on the KT975K |
+| **Xiaomi / Mijia** | Smart Kettle 2 Pro, Thermostatic Kettle 2 / 3 Pro, Mi Smart Kettle Pro (BLE) | xiaomi_miot, mi_kettle_pro | untested |
+| **Fellow** | Stagg EKG Pro, EKG+ | fellow_stagg, staggassistant, stagg-ekg-plus-ha | untested |
+| **Redmond** | SkyKettle RK-G2xxS, RK-M1xx/2xxS | skykettle-ha | untested |
+| **Smarter** | iKettle 3.0 | ha-smarter-integration | untested |
+| **Govee** | H7170 / H7171 / H7173 | govee2mqtt | untested |
 
-The full list with temperatures, keep-warm ranges, the entities and the status values: **[docs/models.md](docs/models.md)**.
-Kettles with tea *modes* instead of a temperature (Svensson, ProfiCook / Koenic, AENO EK1S) get the *Modes* tab.
+25 profiles (EU, UK 3 kW, AU / NZ, UAE, US °F gooseneck, Xiaomi, Fellow, SkyKettle, Smarter, Govee). The full list
+with temperatures, keep-warm ranges, the entities each integration creates and what the card does with them:
+**[docs/models.md](docs/models.md)**. Not possible: COSORI (VeSync), Breville / Sage, Hamilton Beach, Chefman – no
+Home Assistant integration exposes them. Your kettle is not found? Set its entities in the card editor and open an
+issue *New kettle*.
 
 ## Good to know
 

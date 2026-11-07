@@ -109,5 +109,13 @@
   "h_power": "Moc znamionowa – do ilości wody i szacowania energii.",
   "h_energy_entity": "Opcjonalnie – licznik kWh gniazdka czajnika zamiast szacunku.",
   "h_drink": "Przekazuje napój blueprintom (powiadomienie o parzeniu, 2. etap mleka).",
-  "h_water_hardness": "Odkamienianie, gdy nie ustawione: miękka 120, średnia 60, twarda 30 gotowań."
+  "h_water_hardness": "Odkamienianie, gdy nie ustawione: miękka 120, średnia 60, twarda 30 gotowań.",
+  "st_off_base": "zdjęty z podstawy",
+  "st_fault": "usterka",
+  "e_climate": "Climate (Fellow, Kogan glass)",
+  "e_start_button": "Przycisk start",
+  "e_stop_button": "Przycisk stop",
+  "e_keep_warm_temp": "Temperatura podtrzymania",
+  "e_fault": "Czujnik usterki",
+  "e_time_left": "Czujnik pozostałego czasu"
 }

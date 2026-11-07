@@ -109,5 +109,13 @@
   "h_power": "Puissance nominale – pour la quantité d'eau et l'estimation d'énergie.",
   "h_energy_entity": "Facultatif – compteur kWh de la prise au lieu de l'estimation.",
   "h_drink": "Transmet la boisson aux blueprints (notification d'infusion, 2e étape du lait).",
-  "h_water_hardness": "Détartrage si non réglé : douce 120, moyenne 60, dure 30 ébullitions."
+  "h_water_hardness": "Détartrage si non réglé : douce 120, moyenne 60, dure 30 ébullitions.",
+  "st_off_base": "retirée du socle",
+  "st_fault": "défaut",
+  "e_climate": "Climat (Fellow, Kogan verre)",
+  "e_start_button": "Bouton démarrer",
+  "e_stop_button": "Bouton arrêter",
+  "e_keep_warm_temp": "Température de maintien",
+  "e_fault": "Capteur de défaut",
+  "e_time_left": "Capteur de temps restant"
 }

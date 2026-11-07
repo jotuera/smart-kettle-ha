@@ -11,7 +11,7 @@
 [![Licencja](https://img.shields.io/badge/licencja-PolyForm%20Noncommercial-blue)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-jotuera-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/jotuera)
 
-**Integracja Home Assistant i karta Lovelace do czajników Wi-Fi Tuya / Smart Life – SETTI+ KT950W, Götze & Jensen KT975K, AENO, Lidl SilverCrest i innych.** W Home
+**Integracja Home Assistant i karta Lovelace do inteligentnych czajników – Tuya / Smart Life (SETTI+, Götze & Jensen, AENO, Lidl SilverCrest, Kogan…), Xiaomi, Fellow Stagg, Redmond SkyKettle, Smarter iKettle i Govee.** W Home
 Assistant inteligentny czajnik to przełącznik, liczba i czujnik temperatury. Ta karta robi z nich czajnik: ile
 zostało do celu i ile to potrwa, ile wody nalałeś, temperatury **i napoje** jednym dotknięciem (zielona herbata
 80 °C z odliczaniem parzenia, mleko modyfikowane zagotowane i trzymane w 45 °C…), Gotuj / Stop, podtrzymywanie,
@@ -21,7 +21,7 @@ plik JavaScript, bez innych kart custom, bez szablonów YAML.
 > Zbudowana na czajniku autora **Götze & Jensen KT975K** (integracja Tuya w HA), z karty button-card używanej od
 > września 2026. **SETTI+ KT950W** ma w HA te same encje. Inne czajniki: [docs/models.md](docs/models.md).
 >
-> **Status: beta (0.3.0).** Karta działa na czajniku autora; jej logika pokryta testami z atrapą HA.
+> **Status: beta (0.4.0).** Teraz dla czajników Tuya, Xiaomi, Fellow, Redmond, Smarter i Govee. Karta działa na czajniku autora; jej logika pokryta testami z atrapą HA.
 > **Nowe w 0.3.0: integracja Home Assistant**, która sama instaluje kartę i zastępuje pomocniki oraz blueprinty –
 > instalacja w trzech kliknięciach.
 
@@ -176,16 +176,21 @@ automatyzację z każdego, którego chcesz:
 Po myciu lub odkamienianiu **przytrzymaj** licznik na karcie, aby go wyzerować. Własne liczniki też działają – wskaż je
 w `counters:`.
 
-## Czajniki
+## Czajniki – cały świat
 
-| Czajnik | Integracja | Profil | Status |
+| Ekosystem | Czajniki | Integracja, z którą działa | Status |
 |---|---|---|---|
-| **Götze & Jensen KT975K** | Tuya | `gotze_jensen_kt975k` | **przetestowany** |
-| **SETTI+ KT950W** | Tuya, tuya-local | `setti_kt950w` | te same encje co KT975K |
-| AENO EK7S, Fiesta DK1G, SilverCrest (Lidl Home), Webber WK115, Nedis SmartLife, Weekett, Korex, Blow, Goldair… | Tuya, tuya-local | własne profile / `auto` | nieprzetestowane |
+| **Tuya / Smart Life** (Lidl Home, Nedis, Kogan, AENO…) | Götze & Jensen KT975K, **SETTI+ KT950W**, AENO, Fiesta, SilverCrest, Svensson, WeeKett, Koenic / ProfiCook, Homend, Nedis, Blow, Statesman, DMD, Kogan, Korex, Anko, Goldair, Blaupunkt, Vizia… | Tuya, tuya-local, LocalTuya | **przetestowany** na KT975K |
+| **Xiaomi / Mijia** | Smart Kettle 2 Pro, Thermostatic Kettle 2 / 3 Pro, Mi Smart Kettle Pro (BLE) | xiaomi_miot, mi_kettle_pro | nieprzetestowane |
+| **Fellow** | Stagg EKG Pro, EKG+ | fellow_stagg, staggassistant, stagg-ekg-plus-ha | nieprzetestowane |
+| **Redmond** | SkyKettle RK-G2xxS, RK-M1xx/2xxS | skykettle-ha | nieprzetestowane |
+| **Smarter** | iKettle 3.0 | ha-smarter-integration | nieprzetestowane |
+| **Govee** | H7170 / H7171 / H7173 | govee2mqtt | nieprzetestowane |
 
-Pełna lista z temperaturami, zakresami podtrzymania, encjami i wartościami statusu: **[docs/models.md](docs/models.md)**.
-Czajniki z *trybami* herbat zamiast temperatury (Svensson, ProfiCook / Koenic, AENO EK1S) dostają zakładkę *Tryby*.
+25 profili (UE, UK 3 kW, Australia / NZ, ZEA, USA °F, Xiaomi, Fellow, SkyKettle, Smarter, Govee). Pełna lista z
+temperaturami, zakresami podtrzymania, encjami każdej integracji i tym, co karta z nimi robi:
+**[docs/models.md](docs/models.md)**. Nie da się: COSORI (VeSync), Breville / Sage, Hamilton Beach, Chefman – żadna
+integracja HA ich nie udostępnia. Twojego czajnika nie ma? Wskaż encje w edytorze karty i załóż zgłoszenie *New kettle*.
 
 ## Dobrze wiedzieć
 

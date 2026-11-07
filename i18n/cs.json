@@ -109,5 +109,13 @@
   "h_power": "Jmenovitý příkon – pro množství vody a odhad energie.",
   "h_energy_entity": "Volitelné – měřič kWh zásuvky místo odhadu.",
   "h_drink": "Předá nápoj blueprintům (oznámení o louhování, 2. fáze mléka).",
-  "h_water_hardness": "Odvápnění, pokud není nastaveno: měkká 120, střední 60, tvrdá 30 vaření."
+  "h_water_hardness": "Odvápnění, pokud není nastaveno: měkká 120, střední 60, tvrdá 30 vaření.",
+  "st_off_base": "sundaná z podstavce",
+  "st_fault": "porucha",
+  "e_climate": "Klima (Fellow, Kogan glass)",
+  "e_start_button": "Tlačítko start",
+  "e_stop_button": "Tlačítko stop",
+  "e_keep_warm_temp": "Teplota udržování",
+  "e_fault": "Senzor poruchy",
+  "e_time_left": "Senzor zbývajícího času"
 }
